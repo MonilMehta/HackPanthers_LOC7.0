@@ -21,12 +21,13 @@ const generateAccessAndRefreshTokens = async(userId) => {
     }
 } 
 
-const sendVerificationSMS = async(phoneNumber, fullname) => {
+const sendVerificationSMS = async(phoneNo, fullname) => {
     try {
+        console.log(phoneNo, fullname)
         const accountSid = process.env.ACCOUNTSID;
         const authToken = process.env.AUTHTOKEN;
         const client = new twilio(accountSid, authToken);
-        const parsedPhoneNumber = parsePhoneNumberFromString(phoneNumber, 'IN');
+        const parsedPhoneNumber = parsePhoneNumberFromString(phoneNo, 'IN');
         if (!parsedPhoneNumber || !parsedPhoneNumber.isValid()) {
             throw new ApiError(400, "Invalid phone number");
         }
@@ -35,12 +36,12 @@ const sendVerificationSMS = async(phoneNumber, fullname) => {
         const message = await client.messages.create({
             body: `Hi ${fullname}, Your OTP for Police Digital Portal is ${otp}. Please enter this code to verify your account. This OTP is valid for 10 minutes.`,
             to: formattedPhoneNumber,
-            from: '+12512862865'
+            from: '+19362274129'
         });
         return otp;
     } catch (error) {
         console.error("Error sending OTP:", error);
-        throw new ApiError(500, "Failed to send verification SMS");
+        throw new ApiError(500, error);
     }
 }
 
@@ -61,6 +62,7 @@ const registerCitizen = asyncHandler( async ( req, res ) => {
         throw new ApiError(409, "User with email or username already exists")
     }
 
+    console.log(phoneNo, fullname)
     const otp = await sendVerificationSMS(phoneNo, fullname);
 
     const user = await Citizen.create({
