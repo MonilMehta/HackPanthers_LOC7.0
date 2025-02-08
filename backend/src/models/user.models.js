@@ -34,6 +34,11 @@ const userSchema = new Schema(
       type: Date,
       required: [true, "Date of birth is required"],
     },
+    gender:{
+      type: String,
+      enum: ["Male", "Female"],
+      required: true
+    },
     address: {
       street: { type: String, trim: true },
       city: { type: String, trim: true },
@@ -54,6 +59,9 @@ const userSchema = new Schema(
       rank: { type: String },
       station: { type: String },
       assignedCases: [{ type: Schema.Types.ObjectId, ref: "Case" }],
+      cases_solved: { type: Number, default: 0 },
+      cases_pending: { type: Number, default: 0 },
+      attendance_percentage: { type: Number, default: 0 }
     },
     avaliableLeave:{
       type: Number,
