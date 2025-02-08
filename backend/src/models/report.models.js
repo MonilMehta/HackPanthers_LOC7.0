@@ -1,44 +1,56 @@
 import mongoose, { Schema } from "mongoose";
 
-const reportSchema = new Schema(
-  {
-    reporter: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-    },
-    title: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    description: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    location: {
-      street: { type: String, trim: true },
-      city: { type: String, trim: true },
-      state: { type: String, trim: true },
-      pincode: { type: String, trim: true },
-    },
-    dateSubmitted: {
-      type: Date,
-      default: Date.now,
-    },
-    status: {
-      type: String,
-      enum: ["Pending", "Reviewed", "Resolved"],
-      default: "Pending",
-    },
-    files: [
-      {
-        url: { type: String, required: true },
-        fileType: { type: String, enum: ["image", "video"], required: true },
-      },
-    ],
+const ReportBySchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: [true, "Title is required"],
+    trim: true
   },
-  { timestamps: true }
-);
+  description: {
+    type: String,
+    required: [true, "Description is required"],
+    trim: true
+  },
+  location: {
+    street: { 
+      type: String, 
+      required: [true, "Street is required"],
+      trim: true 
+    },
+    city: { 
+      type: String, 
+      required: [true, "City is required"],
+      trim: true 
+    },
+    state: { 
+      type: String, 
+      required: [true, "State is required"],
+      trim: true 
+    },
+    pincode: { 
+      type: String, 
+      required: [true, "Pincode is required"],
+      trim: true 
+    }
+  },
+  type_of_crime: {
+    type: String,
+    enum: ["theft", "assault", "cyber_crime", "fraud", "murder", "extortion","kidnapping","others"],
+    required: [true, "Type of crime is required"]
+  },
+  date: {
+    type: Date,
+    default: Date.now
+  },
+  time: {
+    type: String,
+    required: [true, "Time is required"],
+    trim: true
+  },
+  evidence_photo_url: {
+    type: String,
+    trim: true
+  }
+});
 
-export const Report = mongoose.model("Report", reportSchema);
+export const ReportBy = mongoose.model("ReportBy", ReportBySchema);

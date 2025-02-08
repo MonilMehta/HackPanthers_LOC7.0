@@ -25,11 +25,12 @@ app.use(cookieParser())
 // import routes
 import userRouter from './routes/user.routes.js';
 import caseRouter from './routes/case.routes.js';
-
+import reportRouter from './routes/report.routes.js';
 import citizenRouter from './routes/citizen.routes.js';
 // declare routes
 app.use("/api/users", userRouter);
 app.use("/api/citizens", citizenRouter);
 app.use("/api/case",caseRouter);
+app.use("/api/report",reportRouter);
 
 export { app }
