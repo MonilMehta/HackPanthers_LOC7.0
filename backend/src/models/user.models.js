@@ -45,7 +45,7 @@ const userSchema = new Schema(
     },
     role: {
       type: String,
-      enum: ["admin", "officer", "citizen"],
+      enum: ["admin", "officer"],
       required: true,
     },
     policeDetails: {
