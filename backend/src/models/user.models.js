@@ -54,6 +54,14 @@ const userSchema = new Schema(
       rank: { type: String },
       station: { type: String },
       assignedCases: [{ type: Schema.Types.ObjectId, ref: "Case" }],
+    },
+    avaliableLeave:{
+      type: Number,
+      default: 20,
+    },
+    usedLeave:{
+      type: Number,
+      default: 0
     }
   },
   { timestamps: true }
