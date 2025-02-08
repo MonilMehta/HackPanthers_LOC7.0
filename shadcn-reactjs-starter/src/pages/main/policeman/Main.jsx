@@ -4,11 +4,18 @@ import Sidebar from "./components/Sidebar/Sidebar";
 import Cases from "./pages/cases/Cases";
 import Reports from "./pages/reports/Reports";
 import Chat from "./pages/chats/Chats";
-import Dashboard from "./pages/dashboard/Dashboard";
+import Dash from "./pages/dash/Dash";
 import Evidence from "./pages/evidence/Evidence";
 import Personal from "./pages/personnel/Personal";
 import DutyRoster from "./pages/roster/DutyRoster";
 import Alert from "./pages/alert/Alert";
+import PublicPortal from "./pages/publicportal/PublicPortal";
+import Wanted from "./pages/wantedlist/Wanted";
+import Bulletin from "./pages/bulletin/Bulletin";
+import Analytics from "./pages/analytics/Analytics";
+import Geolocation from "./pages/geolocation/Geolocation";
+
+
 const Dashboard = () => {
   return (
       <div className="flex">
@@ -18,12 +25,18 @@ const Dashboard = () => {
             <Route path="cases" element={<Cases />} />
             <Route path="/" element={<Reports />} />
             <Route path="chat" element={<Chat />} />
-            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="dashboard" element={<Dash />} />
             <Route path="evidence" element={<Evidence />} />
             <Route path="personnel" element={<Personal />} />
             <Route path="roster" element={<DutyRoster />} />
             <Route path="alert" element={<Alert />} />
+            <Route path="publicportal" element={<PublicPortal/>} />
+            <Route path="wantedlist" element={<Wanted />} />
+            <Route path="maps" element={<Geolocation />} />
+            <Route path="bulletin" element={<Bulletin />} />
+            <Route path="analytics" element={<Analytics />} />
 
+            <Route path="*" element={<h1>Not Found</h1>} />
           </Routes>
         </div>
       </div>
