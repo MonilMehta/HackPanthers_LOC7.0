@@ -117,7 +117,7 @@ const getChatById = asyncHandler( async ( req, res ) => {
     const chat = await Chat.findById(chatId)
     .populate({
         path: "participants.userId",
-        select: "username fullName bio avatar",
+        select: "username fullname photo",
         match: { _id: { $ne: null } }
     })
     .lean();
@@ -143,9 +143,8 @@ const getChatById = asyncHandler( async ( req, res ) => {
         participantsInfo = {
             userId: otherParticipant.userId._id,
             username: otherParticipant.userId.username,
-            fullName: otherParticipant.userId.fullName,
-            bio: otherParticipant.userId.bio,
-            avatar: otherParticipant.userId.avatar,
+            fullName: otherParticipant.userId.fullname,
+            avatar: otherParticipant.userId.photo,
         };
     }
 
@@ -273,14 +272,17 @@ const getChats = asyncHandler( async ( req, res ) => {
         {
             $project: {
                 _id: 1,
-                isGroup: 1,
                 chatDetails: 1,
                 lastMessage: 1,
                 unreadCount: 1,
                 totalMessages: 1,
                 "participantDetails.username": 1,
-                "participantDetails.fullName": 1,
-                "participantDetails.avatar": 1,
+                "participantDetails.fullname": 1,
+                "participantDetails.photo": 1,
+                "participantDetails.email": 1,
+                "participantDetails.phone_no": 1,
+                "participantDetails.policeDetails.rank": 1,
+                "participantDetails.policeDetails.station": 1,
             },
         },
         {
