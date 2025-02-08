@@ -38,6 +38,7 @@
     "clsx": "^1.2.1",
     "dotenv": "^16.4.7",
     "framer-motion": "^12.4.1",
+    "frontend": "file:",
     "jspdf": "^2.5.2",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.259.0",

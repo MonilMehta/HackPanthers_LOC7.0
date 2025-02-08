@@ -9,7 +9,7 @@ const createReport = async (req, res) => {
       description,
       location, // expected to include street, city, state, pincode
       type_of_crime,
-      evidence_photo_url,
+      // evidence_photo_url,
       date, // optional; if not provided, the model defaults to Date.now
       time    // required time field (e.g., "14:30:00" or "2:30 PM")
     } = req.body;
@@ -35,7 +35,7 @@ const createReport = async (req, res) => {
       description,
       location,
       type_of_crime,
-      evidence_photo_url,
+      // evidence_photo_url,
       date,  // if omitted, defaults to Date.now
       time   // new required time field
     });
