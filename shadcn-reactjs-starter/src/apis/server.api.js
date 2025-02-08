@@ -1,2 +1,2 @@
-const SERVER_API = `http://localhost:8000/api`;
+const SERVER_API = `${import.meta.env.REACT_APP_BACKEND_URL}`;
 export default SERVER_API;
