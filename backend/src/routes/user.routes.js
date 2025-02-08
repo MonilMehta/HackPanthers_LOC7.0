@@ -9,6 +9,8 @@ router.route("/register").post(registerUser);
 
 router.route("/login").post(loginUser);
 
+router.route("/get-user").get(getAllUsers);
+
 // secured routes
 router.route("/logout").post(verifyJWT ,logoutUser)
 
