@@ -23,4 +23,4 @@ const CaseSchema = new mongoose.Schema({
   witnessStatements: [{ type: mongoose.Schema.Types.ObjectId, ref: "Witness" }],
 },{timestamps:true});
 
-module.exports = mongoose.model("Case", CaseSchema);
+export const Case = mongoose.model("Case", CaseSchema);

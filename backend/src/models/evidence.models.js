@@ -8,5 +8,5 @@ const EvidenceSchema = new mongoose.Schema({
     uploadedAt: { type: Date, default: Date.now },
   });
 
-module.exports = mongoose.model("Evidence",EvidenceSchema);
+export const Evidence = mongoose.model("Evidence",EvidenceSchema);
 
