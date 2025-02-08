@@ -10,11 +10,10 @@ import Personal from "./pages/personnel/Personal";
 import DutyRoster from "./pages/roster/DutyRoster";
 import Alert from "./pages/alert/Alert";
 import PublicPortal from "./pages/publicportal/PublicPortal";
-import Wanted from "./pages/wantedlist/Wanted";
+import MostWanted from "./pages/wantedlist/MostWanted";
 import Bulletin from "./pages/bulletin/Bulletin";
 // import Analytics from "./pages/analytics/Analytics";
 import Geolocation from "./pages/geolocation/Geolocation";
-
 
 const Dashboard = () => {
   return (
@@ -31,7 +30,7 @@ const Dashboard = () => {
             <Route path="roster" element={<DutyRoster />} />
             <Route path="alert" element={<Alert />} />
             <Route path="publicportal" element={<PublicPortal/>} />
-            <Route path="wantedlist" element={<Wanted />} />
+            <Route path="wanted" element={< MostWanted/>} />
             <Route path="maps" element={<Geolocation />} />
             <Route path="bulletin" element={<Bulletin />} />
             {/* <Route path="analytics" element={<Analytics />} /> */}
