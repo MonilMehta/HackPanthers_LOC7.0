@@ -12,8 +12,7 @@ const attendanceSchema = new mongoose.Schema({
         required: [true, "Type of status is required"]
     },
     date:{
-        type:Date,
-        default:Date.now
+        type:String
     },
     in_time:{
         type:String,

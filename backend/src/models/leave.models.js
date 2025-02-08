@@ -14,11 +14,11 @@ const LeaveSchema = new Schema(
         required: [true, "Type of leave is required"]
       }, 
     startDate: { 
-      type: Date, 
+      type: String, 
       required: true 
     },
     endDate: { 
-      type: Date, 
+      type: String, 
       required: true 
     },
     reason: { 

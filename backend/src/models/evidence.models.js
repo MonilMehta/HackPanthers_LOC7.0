@@ -5,7 +5,7 @@ const EvidenceSchema = new mongoose.Schema({
     type: { type: String, enum: ["Photo", "Video", "Document"], required: true },
     fileUrl: { type: String, required: true },
     uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Officer", required: true },
-    uploadedAt: { type: Date, default: Date.now },
+    uploadedAt: { type: String},
   });
 
 export const Evidence = mongoose.model("Evidence",EvidenceSchema);

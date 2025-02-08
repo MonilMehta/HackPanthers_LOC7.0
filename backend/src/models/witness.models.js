@@ -5,7 +5,7 @@ const WitnessSchema = new mongoose.Schema({
     witnessName: { type: String, required: true },
     statement: { type: String, required: true },
     recordedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Officer" },
-    recordedAt: { type: Date, default: Date.now },
+    recordedAt: { type: String },
   });
   
 export const Witness = mongoose.model("Witness", WitnessSchema);
