@@ -1,20 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { 
-  Search, 
-  Filter,
-  Plus,
-  Clock,
-  MapPin,
-  FileText,
-  Tag,
-  User,
-  MoreVertical,
-  Eye,
-  Edit,
-  Trash2,
-  ChevronDown,
-  Calendar,
-  AlertCircle
+  Search, Plus, Clock, MapPin, FileText, Tag, User, MoreVertical, Eye, Edit, Trash2, Calendar, AlertCircle 
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -22,72 +9,78 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { useNavigate } from 'react-router-dom';
 
 const CaseOverview = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [timeFilter, setTimeFilter] = useState('all');
-
-  // Sample case data with more details
-  const allCases = [
-    {
-      caseNumber: "FIR2024-001",
-      status: "Open",
-      priority: "High",
-      dateReported: "2024-02-08",
-      location: "Sector 18, Mumbai",
-      crimeType: "Theft",
-      description: "Armed robbery at local convenience store",
-      assignedTo: "Inspector Sharma",
-      lastUpdated: "2024-02-08 15:30",
-      evidenceCount: 5,
-      witnesses: 3,
-      suspects: 2
-    },
-    {
-      caseNumber: "FIR2024-002",
-      status: "Under Investigation",
-      priority: "Medium",
-      dateReported: "2024-02-07",
-      location: "Andheri West",
-      crimeType: "Assault",
-      description: "Physical altercation reported at residential complex",
-      assignedTo: "Inspector Patel",
-      lastUpdated: "2024-02-07 18:45",
-      evidenceCount: 3,
-      witnesses: 4,
-      suspects: 1
-    },
-    {
-      caseNumber: "FIR2024-003",
-      status: "Closed",
-      priority: "Low",
-      dateReported: "2024-02-05",
-      location: "Bandra East",
-      crimeType: "Vandalism",
-      description: "Property damage at public park",
-      assignedTo: "Inspector Kumar",
-      lastUpdated: "2024-02-06 09:15",
-      evidenceCount: 2,
-      witnesses: 2,
-      suspects: 1
+  const [allCases, setAllCases] = useState([]);
+  const getStatusColor = (status) => {
+    switch (status.toLowerCase()) {
+      case 'open': return 'bg-green-100 text-green-800';
+      case 'under investigation': return 'bg-blue-100 text-blue-800';
+      case 'closed': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
-  ];
+  };
+  const navigate = useNavigate();
+  const getPriorityColor = (priority) => {
+    switch (priority.toLowerCase()) {
+      case 'high': return 'bg-red-100 text-red-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+  // Transform API data to match component structure
+  const transformCaseData = (apiCase) => ({
+    caseNumber: `CASE-${apiCase.caseNo}`,
+    description: apiCase.description,
+    status: apiCase.status,
+    priority: getPriority(apiCase), // You might want to add priority in your API
+    dateReported: apiCase.createdAt,
+    location: `${apiCase.location.street}, ${apiCase.location.city}`,
+    assignedTo: apiCase.assignedOfficers[0]?.fullname || 'Unassigned',
+    lastUpdated: new Date(apiCase.updatedAt).toLocaleDateString(),
+    evidenceCount: apiCase.evidence.length,
+    witnesses: apiCase.witnessStatements.length,
+    suspects: 0, // Add this field to your API if needed
+    title: apiCase.title
+  });
 
+  // Helper function to determine priority (you can modify this based on your needs)
+  const getPriority = (apiCase) => {
+    // This is a placeholder logic - modify based on your requirements
+    if (apiCase.status === 'Open') return 'high';
+    if (apiCase.status === 'Under Investigation') return 'medium';
+    return 'low';
+  };
+
+  // Fetch case data from API
+  useEffect(() => {
+    fetch("http://localhost:8000/api/case/getCase")
+      .then(res => res.json())
+      .then(response => {
+        if (response.success) {
+          const transformedCases = response.data.map(transformCaseData);
+          setAllCases(transformedCases);
+        }
+      })
+      .catch(err => console.error("Error fetching cases:", err));
+  }, []);
+
+  const handleViewDetails = (caseData) => {
+    navigate(`/main/cases/details`, {
+      state: { caseData }
+    });
+  };
   // Filter and search logic
   const filteredCases = useMemo(() => {
     return allCases.filter(case_ => {
@@ -95,8 +88,8 @@ const CaseOverview = () => {
         case_.caseNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
         case_.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         case_.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        case_.assignedTo.toLowerCase().includes(searchTerm.toLowerCase());
-
+        case_.assignedTo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        case_.title.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'all' || case_.status.toLowerCase() === statusFilter.toLowerCase();
       const matchesPriority = priorityFilter === 'all' || case_.priority.toLowerCase() === priorityFilter.toLowerCase();
       
@@ -113,37 +106,11 @@ const CaseOverview = () => {
       } else if (timeFilter === 'month') {
         matchesTime = caseDate >= monthAgo;
       }
-
       return matchesSearch && matchesStatus && matchesPriority && matchesTime;
     });
-  }, [searchTerm, statusFilter, priorityFilter, timeFilter]);
+  }, [searchTerm, statusFilter, priorityFilter, timeFilter, allCases]);
 
-  const getStatusColor = (status) => {
-    switch (status.toLowerCase()) {
-      case 'open':
-        return 'bg-green-100 text-green-800';
-      case 'under investigation':
-        return 'bg-blue-100 text-blue-800';
-      case 'closed':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getPriorityColor = (priority) => {
-    switch (priority.toLowerCase()) {
-      case 'high':
-        return 'bg-red-100 text-red-800';
-      case 'medium':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'low':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
+  // Rest of the component remains the same, just updating the card content to include title
   return (
     <div className="h-full flex flex-col gap-4 p-4">
       {/* Header with Stats */}
@@ -208,7 +175,7 @@ const CaseOverview = () => {
             <Input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search case number, description, location..."
+              placeholder="Search case number, title, description, location..."
               className="pl-10"
             />
           </div>
@@ -251,10 +218,12 @@ const CaseOverview = () => {
             </SelectContent>
           </Select>
 
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            New Case
-          </Button>
+          <Link to="/main/cases/action">
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Case
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -268,8 +237,9 @@ const CaseOverview = () => {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <FileText className="h-4 w-4 text-gray-500" />
-                      <h3 className="font-semibold">{case_.caseNumber}</h3>
+                      <h3 className="font-semibold">{case_.title}</h3>
                     </div>
+                    <p className="text-sm text-gray-500">{case_.caseNumber}</p>
                     <p className="text-sm text-gray-600">{case_.description}</p>
                   </div>
                   
@@ -287,16 +257,24 @@ const CaseOverview = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleViewDetails(case_)}>
+                      <Eye className="h-4 w-4 mr-2" />
+                      View Details
+                    </DropdownMenuItem>
+                    
                         <DropdownMenuItem>
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit Case
+                          <Link to={`/main/cases/action?caseNumber=${encodeURIComponent(case_.caseNumber)}`}>
+                            <a className="flex items-center">
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit Case
+                            </a>
+                          </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={() => handleDeleteCase(case_.caseNumber)}
+                        >
                           <Trash2 className="h-4 w-4 mr-2" />
                           Delete Case
                         </DropdownMenuItem>

@@ -18,13 +18,14 @@ import AddPolice from "./pages/admin/AddPolice";
 import OfficerMetrics from "./pages/admin/Metrics";
 import Profile from "./pages/profile/Profile";
 
+
 const Dashboard = () => {
   return (
       <div className="flex">
         <Sidebar />
         <div className="flex-1 p-6">
           <Routes>
-            <Route path="cases" element={<Cases />} />
+            <Route path="cases/*" element={<Cases />} />
             <Route path="/" element={<Reports />} />
             <Route path="chat" element={<Chat />} />
             <Route path="dashboard" element={<Dash />} />
@@ -40,7 +41,6 @@ const Dashboard = () => {
             {/* <Route path="analytics" element={<Analytics />} /> */}
             <Route path="add-officer" element={<AddPolice />} />
             <Route path="officer-metrics" element={<OfficerMetrics />} />
-
             <Route path="*" element={<h1>Not Found</h1>} />
           </Routes>
         </div>
