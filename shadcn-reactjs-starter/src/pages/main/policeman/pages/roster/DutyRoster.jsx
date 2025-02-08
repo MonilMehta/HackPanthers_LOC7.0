@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useCookies } from 'react-cookie';
 import { Calendar as CalendarIcon, Clock, Users, Check, X } from 'lucide-react';
 import {
   Card,
@@ -33,8 +34,11 @@ import {
 import { Input } from "@/components/ui/input";
 
 const DutyRoster = () => {
+  const [cookies] = useCookies(['role']);
   const [showLeaveForm, setShowLeaveForm] = useState(false);
+  const [showShiftForm, setShowShiftForm] = useState(false);
   const [selectedShift, setSelectedShift] = useState('morning');
+  const isAdmin = cookies.role === 'admin';
 
   // Sample data for officers in different shifts
   const shiftOfficers = {
@@ -102,6 +106,47 @@ const DutyRoster = () => {
     </div>
   );
 
+  const ShiftManagementForm = () => (
+    <div className="space-y-6 p-4">
+      <div>
+        <label className="block text-sm font-semibold mb-2 text-gray-700">Officer</label>
+        <Select>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select officer" />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.values(shiftOfficers).flat().map(officer => (
+              <SelectItem key={officer.id} value={officer.id.toString()}>
+                {officer.name} - {officer.badge}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold mb-2 text-gray-700">New Shift</label>
+        <Select>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select shift" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="morning">Morning Shift</SelectItem>
+            <SelectItem value="evening">Evening Shift</SelectItem>
+            <SelectItem value="night">Night Shift</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex justify-end space-x-4">
+        <Button variant="outline" onClick={() => setShowShiftForm(false)}>
+          Cancel
+        </Button>
+        <Button className="bg-primary">Update Shift</Button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="w-full max-w-6xl mx-auto p-6 bg-gray-50">
       <Tabs defaultValue="shift-roster" className="w-full space-y-6">
@@ -119,10 +164,30 @@ const DutyRoster = () => {
         <TabsContent value="shift-roster">
           <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-200">
             <CardHeader className="bg-gradient-to-r from-black-50 to-black-100 rounded-t-lg">
-              <CardTitle className="flex items-center gap-3 text-black-800">
-                <Clock className="h-5 w-5" />
-                Current Shift Officers
-              </CardTitle>
+              <div className="flex justify-between items-center">
+                <CardTitle className="flex items-center gap-3 text-black-800">
+                  <Clock className="h-5 w-5" />
+                  Current Shift Officers
+                </CardTitle>
+                {isAdmin && (
+                  <Dialog open={showShiftForm} onOpenChange={setShowShiftForm}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline">
+                        Manage Shifts
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Modify Officer Shift</DialogTitle>
+                        <DialogDescription>
+                          Reassign officers to different shifts
+                        </DialogDescription>
+                      </DialogHeader>
+                      <ShiftManagementForm />
+                    </DialogContent>
+                  </Dialog>
+                )}
+              </div>
               <CardDescription className="text-black-600">
                 View officers assigned to each shift
               </CardDescription>
