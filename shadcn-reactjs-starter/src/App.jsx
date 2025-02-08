@@ -1,16 +1,12 @@
-import { useState } from "react";
+import React from 'react'
+import LandingPage from './pages/Landing/LandingPage'
 
-import "./App.css";
-import { AlertDialogDemo } from "./components/AlertDialogDemo";
-import { Button } from "@/components/ui/button"
-
-function App() {
+const App = () => {
   return (
-    <>
-      <Button>CLick me</Button>
-      <AlertDialogDemo />
-    </>
-  );
+    <div>
+      <LandingPage/>
+    </div>
+  )
 }
 
-export default App;
+export default App
