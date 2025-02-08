@@ -15,8 +15,6 @@ import {
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 
@@ -47,11 +45,9 @@ const Sidebar = () => {
 
   const SidebarContent = () => (
     <div className="flex h-full flex-col">
-      <SheetHeader className="px-6 py-4">
-        <SheetTitle className="text-2xl font-bold text-primary">
-          Police Portal
-        </SheetTitle>
-      </SheetHeader>
+      <div className="px-6 py-4">
+        <h2 className="text-2xl font-bold text-primary">Police Portal</h2>
+      </div>
       
       <ScrollArea className="flex-1 px-4">
         <div className="space-y-2 py-4">
