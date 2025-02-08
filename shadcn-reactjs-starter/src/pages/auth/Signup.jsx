@@ -3,22 +3,26 @@ import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Shield, UserCircle, Phone, Key, Lock, ArrowRight } from "lucide-react";
+import { Shield, UserCircle, Phone, Key, Mail, Lock, ArrowRight } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { register, verifyCitizen } from "../../apis/citizen.api";
 
 const Signup = () => {
   const { login } = useAuth();
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
-    role: "",
-    serviceId: "",
+    email: "",
+    password: "",
     otp: ""
   });
   const [error, setError] = useState("");
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (countdown > 0) {
@@ -35,37 +39,70 @@ const Signup = () => {
     }));
   };
 
-  const handleSendOTP = () => {
+  const handleSendOTP = async () => {
     if (!/^[6-9]\d{9}$/.test(formData.phone)) {
       setError("Please enter a valid Indian mobile number");
       return;
     }
-    setIsOtpSent(true);
-    setCountdown(30);
     setError("");
-    // Mock OTP send
-    console.log("OTP sent to", formData.phone);
+
+    if (!formData.fullName || !formData.phone || !formData.email || !formData.password) {
+      setError("All fields are required.");
+      return;
+    }
+
+    try {
+      const response = await axios.post(register, {
+        fullname: formData.fullName,
+        phoneNo: formData.phone,
+        email: formData.email,
+        password: formData.password
+      });
+        console.log(response);
+      if (response.data.success) {
+        setIsOtpSent(true);
+        setCountdown(5);
+        setIsOtpSent(true);
+        setCountdown(30);
+        setError("");
+        console.log("OTP sent to", formData.phone);
+      } else {
+        setError(response.data.message);
+      }
+    } catch (error) {
+      setError(error.response?.data?.message || error.response?.data?.split("Error: ")[1].split("<br>")[0] || "Signup failed. Try again.");
+    }
+
   };
 
-  const validateForm = () => {
-    if (!formData.fullName || !formData.phone || !formData.role || !formData.otp) {
-      setError("All fields are required");
-      return false;
-    }
-    if (formData.otp.length !== 6) {
-      setError("Invalid OTP");
-      return false;
-    }
-    return true;
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    setError("");
 
-    const token = "secure-token-" + Date.now();
-    login(token, formData.role);
-    console.log("Signup successful", formData);
+    if(formData.otp.length !== 6) {
+      setError("Invalid OTP.");
+      return;
+    }
+
+    try {
+      const response = await axios.patch(verifyCitizen, {
+        phoneNo: formData.phone,
+        token: formData.otp
+      });
+
+      if (response.data.success) {
+        // login(response.data.token, "Citizen/Public"); // Login user after verification
+        navigate("/login");
+        console.log("Signup successful", formData);
+      } else {
+        setError(response.data.message);
+      }
+    } catch (error) {
+      setError(error.response?.data?.message || error.response?.data?.split("Error: ")[1].split("<br>")[0] || "OTP verification failed.");
+    }
+
+    // const token = "secure-token-" + Date.now();
+    // login(token, formData.role);
   };
 
   return (
@@ -97,7 +134,7 @@ const Signup = () => {
             <div className="space-y-2">
               <label className="text-sm text-slate-300">Full Name</label>
               <div className="relative">
-                <UserCircle className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                <UserCircle className="absolute left-2 top-2 xl:top-3 xl:left-3 h-5 w-5 text-slate-400" />
                 <Input
                   type="text"
                   name="fullName"
@@ -112,7 +149,7 @@ const Signup = () => {
             <div className="space-y-2">
               <label className="text-sm text-slate-300">Mobile Number</label>
               <div className="relative">
-                <Phone className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                <Phone className="absolute left-2 top-2 xl:top-3 xl:left-3 h-5 w-5 text-slate-400" />
                 <Input
                   type="tel"
                   name="phone"
@@ -127,36 +164,36 @@ const Signup = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm text-slate-300">Role</label>
-              <select
-                name="role"
-                value={formData.role}
-                onChange={handleInputChange}
-                className="w-full p-2 bg-white/5 border-white/10 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
-              >
-                <option value="">Select Role</option>
-                <option value="Police Officer">Police Officer</option>
-                <option value="Supervisor/Manager">Supervisor/Manager</option>
-                <option value="Citizen/Public">Citizen/Public</option>
-              </select>
+              <label className="text-sm text-slate-300">Email</label>
+              <div className="relative">
+                <Mail className="absolute left-2 top-2 xl:top-3 xl:left-3 h-5 w-5 text-slate-400" />
+                <Input
+                  type="text"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-500"
+                  placeholder="abc@example.com"
+                  disabled={isOtpSent}
+                />
+              </div>
             </div>
 
-            {(formData.role === "Police Officer" || formData.role === "Supervisor/Manager") && (
-              <div className="space-y-2">
-                <label className="text-sm text-slate-300">Service ID</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
-                  <Input
-                    type="text"
-                    name="serviceId"
-                    value={formData.serviceId}
-                    onChange={handleInputChange}
-                    className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-500"
-                    placeholder="Enter Service ID"
-                  />
-                </div>
+            <div className="space-y-2">
+              <label className="text-sm text-slate-300">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-2 top-2 xl:top-3 xl:left-3 h-5 w-5 text-slate-400" />
+                <Input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-500"
+                  placeholder="Enter Password"
+                  disabled={isOtpSent}
+                />
               </div>
-            )}
+            </div>
           </div>
 
           {!isOtpSent ? (

@@ -47,26 +47,26 @@ const sendVerificationSMS = async(phoneNo, fullname) => {
 
 const registerCitizen = asyncHandler( async ( req, res ) => {
 
-    const { username, email, phoneNo, fullname, password } = req.body
+    const { email, phoneNo, fullname, password } = req.body
 
     if(
-        [username, email, phoneNo, fullname, password].some((field) => field?.trim() === '')
+        [email, phoneNo, fullname, password].some((field) => field?.trim() === '')
     ) {
         throw new ApiError(400, "All fields are required")
     }
 
     const existingUser = await Citizen.findOne({
-        $or: [{ username }, { email }]
+        $or: [{ phoneNo }, { email }]
     })
     if(existingUser){
-        throw new ApiError(409, "User with email or username already exists")
+        throw new ApiError(409, "User with email or phone number already exists")
     }
 
     console.log(phoneNo, fullname)
     const otp = await sendVerificationSMS(phoneNo, fullname);
 
     const user = await Citizen.create({
-        username: username.toLowerCase(), email, phoneNo, fullname, password, isVerified: false, verificationToken: otp
+        email, phoneNo, fullname, password, isVerified: false, verificationToken: otp
     })
 
     const createdUser = await Citizen.findById(user._id).select(
@@ -91,14 +91,14 @@ const registerCitizen = asyncHandler( async ( req, res ) => {
 
 const loginCitizen = asyncHandler( async ( req, res ) => {
 
-    const { email, username, password } = req.body
+    const { email, phoneNo, password } = req.body
 
-    if(!(username || email)){
+    if(!(phoneNo || email)){
         throw new ApiError(400, "Username or Email is required")
     }
 
     const user = await Citizen.findOne({
-        $or: [{username}, {email}]
+        $or: [{phoneNo}, {email}]
     })
     if(!user){
         throw new ApiError(404, "User does not exist");
@@ -265,10 +265,10 @@ const getCurrentCitizen = asyncHandler( async ( req, res ) => {
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
     const userId = req.user?._id; 
-    const { username, email, phoneNo, fullname } = req.body;
+    const { email, phoneNo, fullname } = req.body;
 
-    if (!(fullname || email || phoneNo || username)) {
-        throw new ApiError(400, "At least one field (fullName or email) is required.");
+    if (!(fullname || email || phoneNo)) {
+        throw new ApiError(400, "At least one field (fullName or email or phone no) is required.");
     }
 
     const user = await Citizen.findByIdAndUpdate(
@@ -278,7 +278,6 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
                 ...(fullname && { fullname }), 
                 ...(email && { email }),
                 ...(phoneNo && { phoneNo }),
-                ...(username && { username }),
             }
         },
         {

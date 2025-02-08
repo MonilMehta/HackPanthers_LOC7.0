@@ -9,14 +9,6 @@ const citizenSchema = new Schema(
       required: [true, "Full name is required"],
       trim: true,
     },
-    username: {
-      type: String,
-      required: [true, "Username is required"],
-      unique: true,
-      lowercase: true,
-      trim: true,
-      index: true,
-    },
     email: {
       type: String,
       required: [true, "Email is required"],
@@ -64,7 +56,7 @@ citizenSchema.methods.generateAccessToken = function () {
     {
       _id: this._id,
       email: this.email,
-      username: this.username,
+      phoneNo: this.phoneNo,
       fullname: this.fullname,
     },
     process.env.ACCESS_TOKEN_SECRET,
