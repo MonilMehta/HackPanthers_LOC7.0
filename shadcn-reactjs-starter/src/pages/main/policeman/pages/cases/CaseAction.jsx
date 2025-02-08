@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,10 +34,20 @@ import {
 } from 'lucide-react';
 
 const CaseAction = ({ caseId }) => {
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const prefillReportId = queryParams.get('reportId');
+
   const [notification, setNotification] = useState(null);
   const [selectedFiles, setSelectedFiles] = useState([]);
+  const [caseTitle, setCaseTitle] = useState('');
 
-  // Sample data
+  useEffect(() => {
+    if (prefillReportId) {
+      setCaseTitle(`Case from Report ${prefillReportId}`);
+    }
+  }, [prefillReportId]);
+
   const statusOptions = ['Under Investigation', 'Pending', 'Closed'];
   const officerOptions = ['Inspector Sharma', 'Inspector Patel', 'Inspector Kumar'];
 
@@ -61,11 +72,15 @@ const CaseAction = ({ caseId }) => {
       icon: <Plus className="h-4 w-4" />,
       content: (
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Case Information */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Basic Information</h3>
             <Input placeholder="Case Number (auto-generated)" disabled />
-            <Input placeholder="Case Title" required />
+            <Input 
+              placeholder="Case Title" 
+              required 
+              defaultValue={caseTitle}
+              onChange={(e) => setCaseTitle(e.target.value)}
+            />
             <Textarea placeholder="Case Description" required className="min-h-[100px]" />
             <Select required>
               <SelectTrigger>
@@ -79,7 +94,6 @@ const CaseAction = ({ caseId }) => {
             </Select>
           </div>
 
-          {/* Location Details */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Location Details</h3>
             <Input placeholder="Street Address" required />
@@ -90,7 +104,6 @@ const CaseAction = ({ caseId }) => {
             <Input placeholder="Pincode" required type="number" />
           </div>
 
-          {/* Reported By Details */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Reported By</h3>
             <Input placeholder="Full Name" required />
@@ -99,7 +112,6 @@ const CaseAction = ({ caseId }) => {
             <Textarea placeholder="Address" />
           </div>
 
-          {/* Evidence Upload */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Evidence</h3>
             <Input 
@@ -120,7 +132,6 @@ const CaseAction = ({ caseId }) => {
             )}
           </div>
 
-          {/* Witness Statements */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Witness Statements</h3>
             <div className="grid grid-cols-2 gap-4">
@@ -204,6 +215,9 @@ const CaseAction = ({ caseId }) => {
             </SelectContent>
           </Select>
           <Textarea placeholder="Assignment Notes" />
+          <div className="mt-2 text-sm text-gray-500">
+            (Only for Admins: Use this section to assign case responsibilities.)
+          </div>
         </div>
       )
     },
@@ -248,7 +262,7 @@ const CaseAction = ({ caseId }) => {
   ];
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-4 space-y-4 shadow-lg rounded-lg">
       {notification && (
         <Alert variant={notification.type === 'success' ? 'default' : 'destructive'}>
           <AlertCircle className="h-4 w-4" />

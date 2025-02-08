@@ -31,7 +31,7 @@ const Dashboard = () => {
             <Route path="personnel" element={<Personal />} />
             <Route path="roster" element={<DutyRoster />} />
             <Route path="alert" element={<Alert />} />
-            <Route path="publicportal" element={<PublicPortal/>} />
+            <Route path="public-portal" element={<PublicPortal/>} />
             <Route path="wanted" element={< MostWanted/>} />
             <Route path="maps" element={<Geolocation />} />
             <Route path="bulletins" element={<Bulletin />} />
