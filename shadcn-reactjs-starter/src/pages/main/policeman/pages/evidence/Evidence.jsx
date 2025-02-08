@@ -2,20 +2,23 @@ import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   FolderOpen, 
   FileText, 
   Image, 
   Video, 
   MessageSquare, 
-  Plus,
+  Search,
   ChevronRight,
   ChevronDown,
-  Upload
+  Upload,
+  UserPlus,
+  X
 } from 'lucide-react';
 
 const Evidence = () => {
-  // Sample data - replace with your backend data
   const [cases, setCases] = useState([
     {
       id: "case-001",
@@ -39,29 +42,26 @@ const Evidence = () => {
           dateAdded: "2024-02-08",
           url: "/evidence/statement.pdf"
         }
-      ]
-    },
-    {
-      id: "case-002",
-      title: "Vehicle Theft Investigation",
-      status: "pending",
-      dateCreated: "2024-02-07",
-      evidence: [
+      ],
+      witnesses: [
         {
-          id: "ev-003",
-          type: "video",
-          title: "Parking Lot Footage",
-          description: "CCTV recording from 8PM-9PM",
-          dateAdded: "2024-02-07",
-          url: "/evidence/parking.mp4"
+          id: "w-001",
+          name: "John Doe",
+          statement: "I was on duty when I noticed suspicious activity...",
+          dateAdded: "2024-02-08"
         }
       ]
-    }
+    },
+    // ... other cases
   ]);
 
   const [expandedCases, setExpandedCases] = useState({});
-  const [selectedCase, setSelectedCase] = useState(null);
-  const [uploadingTo, setUploadingTo] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showWitnessForm, setShowWitnessForm] = useState(null);
+  const [newWitness, setNewWitness] = useState({
+    name: "",
+    statement: ""
+  });
 
   const toggleCase = (caseId) => {
     setExpandedCases(prev => ({
@@ -84,30 +84,55 @@ const Evidence = () => {
   };
 
   const handleFileUpload = (caseId, event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+    const files = event.target.files;
+    if (!files.length) return;
 
-    // Here you would typically upload to your backend/cloud storage
-    // For now, we'll simulate adding the file to the case
-    const newEvidence = {
-      id: `ev-${Date.now()}`,
-      type: file.type.startsWith('image/') ? 'image' : 
-            file.type.startsWith('video/') ? 'video' : 'document',
-      title: file.name,
-      description: 'Recently uploaded evidence',
-      dateAdded: new Date().toISOString().split('T')[0],
-      url: URL.createObjectURL(file)
+    Array.from(files).forEach(file => {
+      const newEvidence = {
+        id: `ev-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type: file.type.startsWith('image/') ? 'image' : 
+              file.type.startsWith('video/') ? 'video' : 'document',
+        title: file.name,
+        description: 'Recently uploaded evidence',
+        dateAdded: new Date().toISOString().split('T')[0],
+        url: URL.createObjectURL(file)
+      };
+
+      setCases(prevCases => 
+        prevCases.map(c => 
+          c.id === caseId 
+            ? { ...c, evidence: [...c.evidence, newEvidence] }
+            : c
+        )
+      );
+    });
+  };
+
+  const handleAddWitness = (caseId) => {
+    if (!newWitness.name || !newWitness.statement) return;
+
+    const witness = {
+      id: `w-${Date.now()}`,
+      ...newWitness,
+      dateAdded: new Date().toISOString().split('T')[0]
     };
 
-    setCases(prevCases => 
-      prevCases.map(c => 
-        c.id === caseId 
-          ? { ...c, evidence: [...c.evidence, newEvidence] }
+    setCases(prevCases =>
+      prevCases.map(c =>
+        c.id === caseId
+          ? { ...c, witnesses: [...(c.witnesses || []), witness] }
           : c
       )
     );
-    setUploadingTo(null);
+
+    setNewWitness({ name: "", statement: "" });
+    setShowWitnessForm(null);
   };
+
+  const filteredCases = cases.filter(case_ =>
+    case_.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    case_.id.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="max-w-6xl mx-auto p-4">
@@ -117,15 +142,22 @@ const Evidence = () => {
             <CardTitle className="text-2xl font-bold">
               Digital Evidence Management
             </CardTitle>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="w-4 h-4 mr-2" />
-              New Case
-            </Button>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+                <Input
+                  placeholder="Search cases..."
+                  className="pl-8"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {cases.map(case_ => (
+            {filteredCases.map(case_ => (
               <div key={case_.id} className="border rounded-lg">
                 <div 
                   className="flex items-center p-4 cursor-pointer hover:bg-gray-50"
@@ -152,44 +184,119 @@ const Evidence = () => {
 
                 {expandedCases[case_.id] && (
                   <div className="border-t p-4">
-                    <div className="flex justify-between items-center mb-4">
-                      <h4 className="font-semibold">Evidence Files</h4>
-                      <div>
-                        <input
-                          type="file"
-                          id={`file-${case_.id}`}
-                          className="hidden"
-                          onChange={(e) => handleFileUpload(case_.id, e)}
-                          accept="image/*,video/*,.pdf,.doc,.docx"
-                        />
-                        <Button
-                          variant="outline"
-                          onClick={() => setUploadingTo(case_.id)}
-                        >
-                          <Upload className="w-4 h-4 mr-2" />
-                          Add Evidence
-                        </Button>
+                    {/* Evidence Section */}
+                    <div className="mb-6">
+                      <div className="flex justify-between items-center mb-4">
+                        <h4 className="font-semibold">Evidence Files</h4>
+                        <div>
+                          <input
+                            type="file"
+                            id={`file-${case_.id}`}
+                            className="hidden"
+                            onChange={(e) => handleFileUpload(case_.id, e)}
+                            accept="image/*,video/*,.pdf,.doc,.docx"
+                            multiple
+                          />
+                          <Button
+                            variant="outline"
+                            onClick={() => document.getElementById(`file-${case_.id}`).click()}
+                          >
+                            <Upload className="w-4 h-4 mr-2" />
+                            Upload Files
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        {case_.evidence.map(evidence => (
+                          <div 
+                            key={evidence.id}
+                            className="flex items-center p-3 rounded-lg hover:bg-gray-50 border"
+                          >
+                            {getEvidenceIcon(evidence.type)}
+                            <div className="ml-3 flex-1">
+                              <h5 className="font-medium">{evidence.title}</h5>
+                              <p className="text-sm text-gray-500">
+                                {evidence.description}
+                              </p>
+                            </div>
+                            <Badge variant="outline" className="ml-2">
+                              {evidence.dateAdded}
+                            </Badge>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                    
-                    <div className="space-y-2">
-                      {case_.evidence.map(evidence => (
-                        <div 
-                          key={evidence.id}
-                          className="flex items-center p-3 rounded-lg hover:bg-gray-50 border"
+
+                    {/* Witness Statements Section */}
+                    <div>
+                      <div className="flex justify-between items-center mb-4">
+                        <h4 className="font-semibold">Witness Statements</h4>
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowWitnessForm(case_.id)}
                         >
-                          {getEvidenceIcon(evidence.type)}
-                          <div className="ml-3 flex-1">
-                            <h5 className="font-medium">{evidence.title}</h5>
-                            <p className="text-sm text-gray-500">
-                              {evidence.description}
+                          <UserPlus className="w-4 h-4 mr-2" />
+                          Add Witness
+                        </Button>
+                      </div>
+
+                      {showWitnessForm === case_.id && (
+                        <div className="mb-4 p-4 border rounded-lg">
+                          <div className="flex justify-between mb-2">
+                            <h5 className="font-medium">New Witness Statement</h5>
+                            <button
+                              onClick={() => setShowWitnessForm(null)}
+                              className="text-gray-500 hover:text-gray-700"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <Input
+                            placeholder="Witness Name"
+                            className="mb-2"
+                            value={newWitness.name}
+                            onChange={(e) => setNewWitness(prev => ({
+                              ...prev,
+                              name: e.target.value
+                            }))}
+                          />
+                          <Textarea
+                            placeholder="Witness Statement"
+                            className="mb-2"
+                            value={newWitness.statement}
+                            onChange={(e) => setNewWitness(prev => ({
+                              ...prev,
+                              statement: e.target.value
+                            }))}
+                          />
+                          <Button
+                            onClick={() => handleAddWitness(case_.id)}
+                            className="w-full"
+                          >
+                            Save Statement
+                          </Button>
+                        </div>
+                      )}
+
+                      <div className="space-y-2">
+                        {case_.witnesses?.map(witness => (
+                          <div 
+                            key={witness.id}
+                            className="p-3 rounded-lg border hover:bg-gray-50"
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <h5 className="font-medium">{witness.name}</h5>
+                              <Badge variant="outline">
+                                {witness.dateAdded}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-gray-600">
+                              {witness.statement}
                             </p>
                           </div>
-                          <Badge variant="outline" className="ml-2">
-                            {evidence.dateAdded}
-                          </Badge>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}

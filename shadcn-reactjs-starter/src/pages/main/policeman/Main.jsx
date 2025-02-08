@@ -14,6 +14,7 @@ import MostWanted from "./pages/wantedlist/MostWanted";
 import Bulletin from "./pages/bulletin/Bulletin";
 // import Analytics from "./pages/analytics/Analytics";
 import Geolocation from "./pages/geolocation/Geolocation";
+import Profile from "./pages/profile/Profile";
 
 const Dashboard = () => {
   return (
@@ -33,6 +34,7 @@ const Dashboard = () => {
             <Route path="wanted" element={< MostWanted/>} />
             <Route path="maps" element={<Geolocation />} />
             <Route path="bulletins" element={<Bulletin />} />
+            <Route path="profile" element={<Profile />} />
             {/* <Route path="analytics" element={<Analytics />} /> */}
 
             <Route path="*" element={<h1>Not Found</h1>} />
