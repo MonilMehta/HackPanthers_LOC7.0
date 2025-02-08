@@ -8,6 +8,8 @@ router.route("/register").post(registerCitizen);
 
 router.route("/login").post(loginCitizen);
 
+router.route("/verify-citizen").patch(verifyCitizen)
+
 // secured routes
 router.route("/logout").post(verifyJWT ,logoutCitizen)
 
@@ -18,7 +20,5 @@ router.route("/change-password").post(verifyJWT, changeCurrentPassword)
 router.route("/current-user").get(verifyJWT, getCurrentCitizen)
 
 router.route("/update-details").patch(verifyJWT, updateAccountDetails)
-
-router.route("/verify-citizen").patch(verifyJWT, verifyCitizen)
 
 export default router
