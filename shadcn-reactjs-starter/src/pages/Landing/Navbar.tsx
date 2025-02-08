@@ -25,25 +25,27 @@ interface RouteProps {
 
 const routeList: RouteProps[] = [
   {
-    href: "#dashboard",
+    href: "/",
+    label: "Home",
+  },
+  {
+    href: "/report",
+    label: "Report Crime",
+  },
+  {
+    href: "/main/dashboard",
     label: "Dashboard",
   },
   {
-    href: "#cases",
+    href: "/main/cases",
     label: "Case Management",
-  },
-  {
-    href: "#resources",
-    label: "Resources",
-  },
-  {
-    href: "#contact",
-    label: "Contact",
   },
 ];
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const isAuthenticated = localStorage.getItem('token') !== null;
+
   return (
     <header className="sticky border-b-[1px] top-0 z-40 w-full bg-white dark:border-b-slate-700 dark:bg-background">
       <NavigationMenu className="mx-auto">
@@ -127,16 +129,32 @@ export const Navbar = () => {
           </nav>
 
           <div className="hidden md:flex gap-2">
-            <a
-              rel="noreferrer noopener"
-              href="https://github.com/leoMirandaa/shadcn-landing-page.git"
-              target="_blank"
-              className={`border ${buttonVariants({ variant: "secondary" })}`}
-            >
-              <GitHubLogoIcon className="mr-2 w-5 h-5" />
-              Github
-            </a>
-
+            {!isAuthenticated ? (
+              <>
+                <a
+                  href="/login"
+                  className={buttonVariants({ variant: "ghost" })}
+                >
+                  Login
+                </a>
+                <a
+                  href="/signup"
+                  className={buttonVariants({ variant: "default" })}
+                >
+                  Sign Up
+                </a>
+              </>
+            ) : (
+              <button
+                onClick={() => {
+                  localStorage.removeItem('token');
+                  window.location.href = '/';
+                }}
+                className={buttonVariants({ variant: "ghost" })}
+              >
+                Logout
+              </button>
+            )}
             <ModeToggle />
           </div>
         </NavigationMenuList>
