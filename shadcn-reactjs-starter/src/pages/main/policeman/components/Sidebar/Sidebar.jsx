@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useCookies } from 'react-cookie';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -26,6 +27,8 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const Sidebar = () => {
   const location = useLocation();
+  const [cookies] = useCookies(['role']);
+  const role = cookies.role;
 
   const menuItems = [
     {
@@ -93,6 +96,19 @@ const Sidebar = () => {
       icon: <AlertTriangle className="h-5 w-5" />,
       path: "/main/bulletins",
     },
+    // Add admin-specific menu items
+    ...(role === 'admin' ? [
+      {
+        title: "Add Officer",
+        icon: <Users className="h-5 w-5" />,
+        path: "/main/add-officer",
+      },
+      {
+        title: "Officer Metrics",
+        icon: <BarChart3 className="h-5 w-5" />,
+        path: "/main/officer-metrics",
+      }
+    ] : []),
   ];
 
   const isActiveRoute = (path) => {
