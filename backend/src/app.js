@@ -38,6 +38,8 @@ import caseRouter from './routes/case.routes.js';
 import reportRouter from './routes/report.routes.js';
 import citizenRouter from './routes/citizen.routes.js';
 import chatRouter from "./routes/chat.routes.js";
+import alertRouter from './routes/alert.routes.js';
+import wantedRouter from './routes/wanted.routes.js'
 
 // declare routes
 app.use("/api/users", userRouter);
@@ -45,6 +47,8 @@ app.use("/api/citizens", citizenRouter);
 app.use("/api/case",caseRouter);
 app.use("/api/report",reportRouter);
 app.use("/api/chats", chatRouter);
+app.use("/api/alert",alertRouter);
+app.use("/api/wanted",wantedRouter);
 
 app.use((err, _, res, next) => {
     const statusCode = err.statusCode || 500;

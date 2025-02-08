@@ -32,7 +32,7 @@ const Dashboard = () => {
             <Route path="publicportal" element={<PublicPortal/>} />
             <Route path="wanted" element={< MostWanted/>} />
             <Route path="maps" element={<Geolocation />} />
-            <Route path="bulletin" element={<Bulletin />} />
+            <Route path="bulletins" element={<Bulletin />} />
             {/* <Route path="analytics" element={<Analytics />} /> */}
 
             <Route path="*" element={<h1>Not Found</h1>} />
