@@ -2,6 +2,8 @@ import { Router } from "express";
 import { changeCurrentPassword, getCurrentUser, loginUser, logoutUser, refreshAccessToken, registerUser, updateAccountDetails } from "../controllers/user.controller.js";
 import { getAllUsers } from "../controllers/getUserDetails.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { getUsersByShift } from "../controllers/getShift.js";
+import { updateUserShift } from "../controllers/assignShift.js";
 
 const router = Router();
 
@@ -11,6 +13,9 @@ router.route("/login").post(loginUser);
 
 router.route("/get-user").get(getAllUsers);
 
+router.route("/get-shift").get(getUsersByShift);
+
+router.route("/update-shift").patch(updateUserShift);
 // secured routes
 router.route("/logout").post(verifyJWT ,logoutUser)
 
