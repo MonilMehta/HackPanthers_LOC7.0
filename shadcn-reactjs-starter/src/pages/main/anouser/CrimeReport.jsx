@@ -11,10 +11,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AlertCircle, Upload, X } from "lucide-react";
+import jsPDF from 'jspdf';
 
 const CrimeReport = () => {
   const [formData, setFormData] = useState({
-    title:'',
+    title: '',
     location: '',
     crimeType: '',
     date: '',
@@ -25,6 +26,102 @@ const CrimeReport = () => {
   const [files, setFiles] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef(null);
+
+  // Function to convert file to base64
+  const getBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  const generatePDF = async () => {
+    const doc = new jsPDF();
+    let yPos = 15;
+    
+    // Add header
+    doc.setFontSize(20);
+    doc.text('Crime Report', 105, yPos, { align: 'center' });
+    
+    // Add report details
+    yPos += 20;
+    doc.setFontSize(12);
+    doc.text('Report Details', 20, yPos);
+    
+    const content = [
+      ['Title:', formData.title],
+      ['Location:', formData.location],
+      ['Crime Type:', formData.crimeType],
+      ['Date:', formData.date],
+      ['Time:', formData.time],
+      ['Description:', '']
+    ];
+
+    yPos += 10;
+    content.forEach(([label, value]) => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(label, 20, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.text(value || '', 60, yPos);
+      yPos += 10;
+    });
+
+    // Add description with word wrap
+    const splitDescription = doc.splitTextToSize(formData.description, 170);
+    doc.text(splitDescription, 20, yPos);
+    yPos += splitDescription.length * 7 + 10;
+
+    // Add evidence files
+    if (files.length > 0) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Evidence Files:', 20, yPos);
+      yPos += 10;
+      doc.setFont('helvetica', 'normal');
+
+      // Process each file
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        doc.text(`${i + 1}. ${file.name}`, 20, yPos);
+        yPos += 7;
+
+        // If the file is an image, add it to the PDF
+        if (file.type.startsWith('image/')) {
+          try {
+            // Convert image to base64
+            const base64 = await getBase64(file);
+            
+            // Calculate image dimensions to fit in PDF
+            const imgWidth = 160; // Max width in the PDF
+            const imgHeight = 100; // Max height in the PDF
+            
+            // Add new page if not enough space
+            if (yPos > 250) {
+              doc.addPage();
+              yPos = 20;
+            }
+            
+            // Add image to PDF
+            doc.addImage(base64, 'JPEG', 20, yPos, imgWidth, imgHeight, undefined, 'FAST');
+            yPos += imgHeight + 10; // Add some spacing after image
+          } catch (error) {
+            console.error('Error processing image:', error);
+            doc.text('Error loading image', 20, yPos);
+            yPos += 10;
+          }
+        }
+      }
+    }
+
+    // Add footer on the last page
+    const timestamp = new Date().toLocaleString();
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${timestamp}`, 20, 280);
+
+    // Save the PDF
+    doc.save(`crime-report-${formData.date}.pdf`);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -44,26 +141,19 @@ const CrimeReport = () => {
     console.log('Form submitted:', formData);
     console.log('Files:', files);
     
+    // Generate and download PDF
+    await generatePDF();
+    
     setIsSubmitting(false);
     setFiles([]);
     setFormData({
-      name: '',
-      phone: '',
-      email: '',
+      title: '',
       location: '',
       crimeType: '',
       date: '',
       time: '',
       description: '',
     });
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
   };
 
   const handleFileSelect = (e) => {
@@ -75,6 +165,14 @@ const CrimeReport = () => {
     });
 
     setFiles(prev => [...prev, ...validFiles]);
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleDragOver = (e) => {
@@ -104,6 +202,7 @@ const CrimeReport = () => {
     setFiles(prev => prev.filter((_, index) => index !== indexToRemove));
   };
 
+  // Rest of the JSX remains the same...
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-2xl mx-auto">
@@ -123,14 +222,12 @@ const CrimeReport = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Personal Information */}
-
               {/* Incident Details */}
               <div className="space-y-4">
-              <h3 className="font-medium text-gray-900">Title</h3>
+                <h3 className="font-medium text-gray-900">Title</h3>
                 <Input
                   name="title"
-                  placeholder="title"
+                  placeholder="Title"
                   value={formData.title}
                   onChange={handleChange}
                   required
