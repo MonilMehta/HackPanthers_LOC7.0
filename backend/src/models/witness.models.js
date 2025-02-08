@@ -8,5 +8,5 @@ const WitnessSchema = new mongoose.Schema({
     recordedAt: { type: Date, default: Date.now },
   });
   
-module.exports = mongoose.model("Witness", WitnessSchema);
+export const Witness = mongoose.model("Witness", WitnessSchema);
   
