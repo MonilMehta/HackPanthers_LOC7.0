@@ -53,11 +53,7 @@ const userSchema = new Schema(
       rank: { type: String },
       station: { type: String },
       assignedCases: [{ type: Schema.Types.ObjectId, ref: "Case" }],
-    },
-    reportsFiled: [{ type: Schema.Types.ObjectId, ref: "Report" }],
-    refreshToken: {
-      type: String,
-    },
+    }
   },
   { timestamps: true }
 );

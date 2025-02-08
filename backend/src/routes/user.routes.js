@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { changeCurrentPassword, getCurrentUser, loginUser, logoutUser, refreshAccessToken, registerUser, updateAccountDetails } from "../controllers/user.controller.js";
+import { getAllUsers } from "../controllers/getUserDetails.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 //import { subscribeNewsletter } from '../controllers/subscription.controller.js';
 
@@ -9,6 +10,7 @@ router.route("/register").post(registerUser);
 
 router.route("/login").post(loginUser);
 
+router.route("/getUser").get(getAllUsers);
 // secured routes
 router.route("/logout").post(verifyJWT ,logoutUser)
 
