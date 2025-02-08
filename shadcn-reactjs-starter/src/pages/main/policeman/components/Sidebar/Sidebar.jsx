@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useCookies } from 'react-cookie';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -20,16 +21,14 @@ import {
   AlertTriangle,
   BadgeAlert,
   UserCircle,
-  Menu
+  Menu,
 } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Link as Lk } from "react-router-dom";
 const Sidebar = () => {
   const location = useLocation();
+  const [cookies] = useCookies(['role']);
+  const role = cookies.role;
 
   const menuItems = [
     {
@@ -70,7 +69,7 @@ const Sidebar = () => {
     {
       title: "Emergency Alerts",
       icon: <Bell className="h-5 w-5" />,
-      path: "/main/alerts",
+      path: "/main/alert",
     },
     {
       title: "GeoLocation",
@@ -97,6 +96,19 @@ const Sidebar = () => {
       icon: <AlertTriangle className="h-5 w-5" />,
       path: "/main/bulletins",
     },
+    // Add admin-specific menu items
+    ...(role === 'admin' ? [
+      {
+        title: "Add Officer",
+        icon: <Users className="h-5 w-5" />,
+        path: "/main/add-officer",
+      },
+      {
+        title: "Officer Metrics",
+        icon: <BarChart3 className="h-5 w-5" />,
+        path: "/main/officer-metrics",
+      }
+    ] : []),
   ];
 
   const isActiveRoute = (path) => {
@@ -108,7 +120,7 @@ const Sidebar = () => {
       <div className="px-6 py-4">
         <h2 className="text-2xl font-bold text-primary">Police Portal</h2>
       </div>
-      
+
       <ScrollArea className="flex-1 px-4">
         <div className="space-y-2 py-4">
           {menuItems.map((item) => (
@@ -116,8 +128,8 @@ const Sidebar = () => {
               key={item.path}
               variant={isActiveRoute(item.path) ? "default" : "ghost"}
               className={`w-full justify-start gap-2 ${
-                isActiveRoute(item.path) 
-                  ? "bg-primary text-primary-foreground" 
+                isActiveRoute(item.path)
+                  ? "bg-primary text-primary-foreground"
                   : "hover:bg-primary/10"
               }`}
               asChild
@@ -141,7 +153,10 @@ const Sidebar = () => {
             <Settings className="h-5 w-5" />
             Settings
           </Button>
-          <Button variant="ghost" className="w-full justify-start gap-2 text-red-500 hover:text-red-500 hover:bg-red-50">
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2 text-red-500 hover:text-red-500 hover:bg-red-50"
+          >
             <LogOut className="h-5 w-5" />
             Logout
           </Button>
