@@ -16,6 +16,7 @@ import Bulletin from "./pages/bulletin/Bulletin";
 import Geolocation from "./pages/geolocation/Geolocation";
 import AddPolice from "./pages/admin/AddPolice";
 import OfficerMetrics from "./pages/admin/Metrics";
+import Profile from "./pages/profile/Profile"
 
 const Dashboard = () => {
   return (

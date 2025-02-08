@@ -39,7 +39,7 @@ const ReportBySchema = new mongoose.Schema({
     required: [true, "Type of crime is required"]
   },
   date: {
-    type: string
+    type: String
   },
   time: {
     type: String,
