@@ -19,6 +19,7 @@ const App = () => {
         {/* Protected routes */}
         <Route path="/report" element={<CrimeReport />} />
         <Route path="/main/*" element={<Main />} />
+
       </Routes>
     </BrowserRouter>
   );

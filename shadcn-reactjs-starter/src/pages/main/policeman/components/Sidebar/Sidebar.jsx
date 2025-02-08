@@ -4,12 +4,21 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
+  LayoutDashboard,
   FileText,
   MessageSquare,
   ClipboardList,
-  Menu,
-  LogOut,
+  Users,
+  Bell,
+  Map,
+  BarChart3,
+  Shield,
+  Calendar,
+  FileImage,
   Settings,
+  LogOut,
+  AlertTriangle,
+  BadgeAlert,
   UserCircle,
 } from "lucide-react";
 import {
@@ -23,19 +32,69 @@ const Sidebar = () => {
 
   const menuItems = [
     {
-      title: "Cases",
+      title: "Dashboard",
+      icon: <LayoutDashboard className="h-5 w-5" />,
+      path: "/main/dashboard",
+    },
+    {
+      title: "Case Management",
       icon: <ClipboardList className="h-5 w-5" />,
       path: "/main/cases",
     },
     {
-      title: "Reports",
-      icon: <FileText className="h-5 w-5" />,
-      path: "/main/",
+      title: "Evidence Center",
+      icon: <FileImage className="h-5 w-5" />,
+      path: "/main/evidence",
+    },
+    // {
+    //   title: "Incident Reports",
+    //   icon: <FileText className="h-5 w-5" />,
+    //   path: "/main/reports",
+    // },
+    {
+      title: "Personnel Management",
+      icon: <Users className="h-5 w-5" />,
+      path: "/main/personnel",
     },
     {
-      title: "Chatting",
+      title: "Duty Roster",
+      icon: <Calendar className="h-5 w-5" />,
+      path: "/main/roster",
+    },
+    {
+      title: "Communication Hub",
       icon: <MessageSquare className="h-5 w-5" />,
       path: "/main/chat",
+    },
+    {
+      title: "Emergency Alerts",
+      icon: <Bell className="h-5 w-5" />,
+      path: "/main/alerts",
+    },
+    {
+      title: "GeoLocation",
+      icon: <Map className="h-5 w-5" />,
+      path: "/main/maps",
+    },
+    {
+      title: "Crime Analytics",
+      icon: <BarChart3 className="h-5 w-5" />,
+      path: "/main/analytics",
+    },
+    {
+      title: "Public Portal",
+      icon: <Shield className="h-5 w-5" />,
+      path: "/main/public-portal",
+    },
+    {
+      title: "Wanted List",
+      icon: <BadgeAlert className="h-5 w-5" />,
+      path: "/main/wanted",
+    },
+    {
+      title: "Safety Bulletins",
+      icon: <AlertTriangle className="h-5 w-5" />,
+      path: "/main/bulletins",
     },
   ];
 
@@ -64,7 +123,7 @@ const Sidebar = () => {
             >
               <Link to={item.path}>
                 {item.icon}
-                {item.title}
+                <span className="text-sm">{item.title}</span>
               </Link>
             </Button>
           ))}
@@ -72,10 +131,10 @@ const Sidebar = () => {
 
         <Separator className="my-4" />
 
-        <div className="space-y-2">
+        <div className="space-y-2 pb-4">
           <Button variant="ghost" className="w-full justify-start gap-2">
             <UserCircle className="h-5 w-5" />
-            Profile
+            My Profile
           </Button>
           <Button variant="ghost" className="w-full justify-start gap-2">
             <Settings className="h-5 w-5" />
