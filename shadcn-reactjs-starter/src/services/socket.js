@@ -7,7 +7,7 @@ class SocketService {
 
     connect(token) {
         if (!this.socket) {
-            this.socket = io(`http://localhost:8000`, {
+            this.socket = io(`${import.meta.env.VITE_BACKEND_URL}`, {
                 auth: { token },
                 transports: ["websocket"]
             });

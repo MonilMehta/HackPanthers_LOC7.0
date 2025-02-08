@@ -38,8 +38,6 @@ const ChatInterface = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
-  const [allUsers, setAllUsers] = useState([]);
-  const [usersWithChats, setUsersWithChats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [render, setRender] = useState(false);
   const [error, setError] = useState(null);
@@ -73,8 +71,6 @@ const ChatInterface = () => {
         chatId: chat._id,
       }));
 
-      setUsersWithChats(chatUsers);
-
       const usersResponse = await axios.get(getUsers, {
         headers: { Authorization: `Bearer ${cookies.accessToken}` },
       });
@@ -83,7 +79,7 @@ const ChatInterface = () => {
         id: user._id,
         name: user.username,
         role: user.policeDetails.rank,
-        avatar: `https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcZsL6PVn0SNiabAKz7js0QknS2ilJam19QQ&s`,
+        avatar: user.photo || `https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcZsL6PVn0SNiabAKz7js0QknS2ilJam19QQ&s`,
         lastMessage: "",
         time: "",
         station: user.policeDetails.station,
@@ -98,7 +94,6 @@ const ChatInterface = () => {
       );
 
       console.log(usersWithoutChats);
-      setAllUsers(usersWithoutChats);
       setLoading(false);
       setFilteredUsers(
         [...chatUsers, ...usersWithoutChats].filter((user) =>
@@ -343,17 +338,6 @@ const ChatInterface = () => {
       );
 
       console.log(response);
-      // Update local state to reflect messages as read
-      setUsersWithChats((prev) =>
-        prev.map((user) =>
-          user.chatId === chatId
-            ? {
-                ...user,
-                unreadCount: 0,
-              }
-            : user
-        )
-      );
     } catch (err) {
       console.error("Error marking messages as read:", err);
     } finally {

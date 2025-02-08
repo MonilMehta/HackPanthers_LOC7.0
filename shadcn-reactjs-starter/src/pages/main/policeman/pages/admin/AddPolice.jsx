@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from "react";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
-import axios from 'axios';
+import { Camera } from "lucide-react";
+import axios from "axios";
 import {
   Select,
   SelectContent,
@@ -13,60 +14,85 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import AWSHelper from "../../../../../services/aws";
+import { register } from "../../../../../apis/user.api";
 
 const AddPolice = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    fullname: '',
-    date_of_birth: '',
-    gender: '',
-    phone_no: '',
-    password: '',
-    role: 'officer',
+    username: "",
+    email: "",
+    fullname: "",
+    date_of_birth: "",
+    gender: "",
+    phone_no: "",
+    password: "",
+    role: "officer",
+    photo: "",
     address: {
-      street: '',
-      city: '',
-      state: '',
-      pincode: '',
+      street: "",
+      city: "",
+      state: "",
+      pincode: "",
     },
     policeDetails: {
-      badgeNumber: '',
-      rank: '',
-      station: '',
+      badgeNumber: "",
+      rank: "",
+      station: "",
       cases_solved: 0,
       cases_pending: 0,
-      attendance_percentage: 0
+      attendance_percentage: 0,
     },
     avaliableLeave: 20,
     usedLeave: 0,
   });
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith("image/")) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Invalid file type",
+        description: "Please select an image file",
+        action: <ToastAction altText="Try again">Try again</ToastAction>,
+      });
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      setFormData(prev => ({
+    if (name.includes(".")) {
+      const [parent, child] = name.split(".");
+      setFormData((prev) => ({
         ...prev,
         [parent]: {
           ...prev[parent],
-          [child]: value
-        }
+          [child]: value,
+        },
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
   };
 
   const handleSelectChange = (value, name) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -75,24 +101,28 @@ const AddPolice = () => {
     setIsLoading(true);
 
     try {
-      // Format the date to match the expected format
+      let photoUrl = "";
+      if (selectedImage) {
+        photoUrl = await AWSHelper.upload(
+          selectedImage,
+          formData.username
+        );
+        console.log(photoUrl);
+      }
       const formattedDate = new Date(formData.date_of_birth).toISOString();
 
       // Prepare the request body
       const requestBody = {
         ...formData,
         date_of_birth: formattedDate,
+        photo: photoUrl,
       };
 
-      const response = await axios.post(
-        'http://localhost:8000/api/users/register',
-        requestBody,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await axios.post(register, requestBody, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
       if (response.data) {
         toast({
@@ -103,36 +133,39 @@ const AddPolice = () => {
 
         // Reset form
         setFormData({
-          username: '',
-          email: '',
-          fullname: '',
-          date_of_birth: '',
-          gender: '',
-          phone_no: '',
-          password: '',
-          role: 'officer',
+          username: "",
+          email: "",
+          fullname: "",
+          date_of_birth: "",
+          gender: "",
+          phone_no: "",
+          password: "",
+          role: "officer",
+          photo: "",
           address: {
-            street: '',
-            city: '',
-            state: '',
-            pincode: '',
+            street: "",
+            city: "",
+            state: "",
+            pincode: "",
           },
           policeDetails: {
-            badgeNumber: '',
-            rank: '',
-            station: '',
+            badgeNumber: "",
+            rank: "",
+            station: "",
             cases_solved: 0,
             cases_pending: 0,
-            attendance_percentage: 0
+            attendance_percentage: 0,
           },
           avaliableLeave: 20,
           usedLeave: 0,
         });
+        setSelectedImage(null);
+        setPreviewUrl(null);
       }
     } catch (error) {
-      console.error('Registration error:', error);
-      let errorMessage = 'Failed to register officer.';
-      
+      console.error("Registration error:", error);
+      let errorMessage = "Failed to register officer.";
+
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       }
@@ -156,6 +189,37 @@ const AddPolice = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Profile Photo Upload */}
+            <div className="flex flex-col items-center space-y-4">
+              <div
+                className="relative w-32 h-32 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {previewUrl ? (
+                  <img
+                    src={previewUrl}
+                    alt="Profile preview"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Camera className="w-12 h-12 text-gray-400" />
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageChange}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                Upload Photo
+              </Button>
+            </div>
             {/* Basic Information */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -226,8 +290,8 @@ const AddPolice = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="gender">Gender</Label>
-                <Select 
-                  onValueChange={(value) => handleSelectChange(value, 'gender')} 
+                <Select
+                  onValueChange={(value) => handleSelectChange(value, "gender")}
                   value={formData.gender}
                   required
                 >
@@ -361,8 +425,8 @@ const AddPolice = () => {
             {/* Role Selection */}
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
-              <Select 
-                onValueChange={(value) => handleSelectChange(value, 'role')} 
+              <Select
+                onValueChange={(value) => handleSelectChange(value, "role")}
                 value={formData.role}
                 required
               >

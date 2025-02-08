@@ -39,6 +39,10 @@ const userSchema = new Schema(
       enum: ["Male", "Female"],
       required: true
     },
+    photo: {
+      type: String,
+      default: "https://cdn-icons-png.flaticon.com/512/10295/10295611.png",
+    },
     address: {
       street: { type: String, trim: true },
       city: { type: String, trim: true },

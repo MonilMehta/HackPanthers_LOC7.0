@@ -1,13 +1,13 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
 
-const accessKeyId = import.meta.env.AWS_ACCESS_KEY_ID
-const secretAccessKey = import.meta.env.AWS_SECRET_KEY
+const accessKeyId = `${import.meta.env.VITE_AWS_ACCESS_KEY}`
+const secretAccessKey = `${import.meta.env.VITE_AWS_SECRET_KEY}`
 let credentials = {
   accessKeyId,
   secretAccessKey,
 };
-const folder = "loc7/";
+const folder = "loc7";
 const region = "eu-north-1";
 const bucket = "milanh";
 const client = new S3Client({
@@ -17,7 +17,7 @@ const client = new S3Client({
 
 
 const AWSHelper = {
-    uploadVideoDirect: async function(file, userName) {
+    upload: async function(file, userName) {
         try {
         const fileExtension = file.name.split('.').pop();
         const fileName = `${uuidv4()}.${fileExtension}`;
