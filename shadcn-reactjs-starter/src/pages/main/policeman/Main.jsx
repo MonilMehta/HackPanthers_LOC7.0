@@ -12,7 +12,7 @@ import Alert from "./pages/alert/Alert";
 import PublicPortal from "./pages/publicportal/PublicPortal";
 import Wanted from "./pages/wantedlist/Wanted";
 import Bulletin from "./pages/bulletin/Bulletin";
-import Analytics from "./pages/analytics/Analytics";
+// import Analytics from "./pages/analytics/Analytics";
 import Geolocation from "./pages/geolocation/Geolocation";
 
 
@@ -34,7 +34,7 @@ const Dashboard = () => {
             <Route path="wantedlist" element={<Wanted />} />
             <Route path="maps" element={<Geolocation />} />
             <Route path="bulletin" element={<Bulletin />} />
-            <Route path="analytics" element={<Analytics />} />
+            {/* <Route path="analytics" element={<Analytics />} /> */}
 
             <Route path="*" element={<h1>Not Found</h1>} />
           </Routes>
