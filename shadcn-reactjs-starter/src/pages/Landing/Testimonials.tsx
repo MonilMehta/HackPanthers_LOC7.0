@@ -17,45 +17,39 @@ interface TestimonialProps {
 const testimonials: TestimonialProps[] = [
   {
     image: "https://github.com/shadcn.png",
-    name: "John Doe React",
-    userName: "@john_Doe",
-    comment: "This landing page is awesome!",
+    name: "Officer Sarah Johnson",
+    userName: "@sjohnson_pd",
+    comment: "This platform has revolutionized how we communicate crime alerts to our community.",
   },
   {
     image: "https://github.com/shadcn.png",
-    name: "John Doe React",
-    userName: "@john_Doe1",
-    comment:
-      "Lorem ipsum dolor sit amet,empor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud.",
-  },
-
-  {
-    image: "https://github.com/shadcn.png",
-    name: "John Doe React",
-    userName: "@john_Doe2",
-    comment:
-      "Lorem ipsum dolor sit amet,exercitation. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident.",
+    name: "Detective Mike Chen",
+    userName: "@det_chen",
+    comment: "The real-time crime reporting feature has helped us respond faster to incidents in our neighborhood.",
   },
   {
     image: "https://github.com/shadcn.png",
-    name: "John Doe React",
-    userName: "@john_Doe3",
-    comment:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.",
+    name: "Community Leader Tom Patel",
+    userName: "@tpatel_comm",
+    comment: "As a neighborhood watch coordinator, this tool has become invaluable for keeping our residents informed and safe.",
   },
   {
     image: "https://github.com/shadcn.png",
-    name: "John Doe React",
-    userName: "@john_Doe4",
-    comment:
-      "Lorem ipsum dolor sit amet, tempor incididunt  aliqua. Ut enim ad minim veniam, quis nostrud.",
+    name: "Maria Rodriguez",
+    userName: "@mrodriguez",
+    comment: "The crime alerts have helped me make informed decisions about my family's safety. Excellent service!",
   },
   {
     image: "https://github.com/shadcn.png",
-    name: "John Doe React",
-    userName: "@john_Doe5",
-    comment:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    name: "Sgt. James Wilson",
+    userName: "@sgt_wilson",
+    comment: "The data analytics have improved our patrol strategies significantly.",
+  },
+  {
+    image: "https://github.com/shadcn.png",
+    name: "Lisa Chang",
+    userName: "@changL",
+    comment: "Being informed about local incidents has made our business district safer for everyone.",
   },
 ];
 

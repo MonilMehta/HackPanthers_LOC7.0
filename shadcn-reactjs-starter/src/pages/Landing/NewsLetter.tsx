@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 export const Newsletter = () => {
   const handleSubmit = (e: any) => {
     e.preventDefault();
-    console.log("Subscribed!");
+    console.log("Subscribed to crime reports!");
   };
 
   return (
@@ -13,13 +13,13 @@ export const Newsletter = () => {
 
       <div className="container py-24 sm:py-32">
         <h3 className="text-center text-4xl md:text-5xl font-bold">
-          Join Our Daily{" "}
+          Stay
           <span className="bg-gradient-to-b from-primary/60 to-primary text-transparent bg-clip-text">
-            Newsletter
+            {" "}Informed & Safe{" "}
           </span>
         </h3>
         <p className="text-xl text-muted-foreground text-center mt-4 mb-8">
-          Lorem ipsum dolor sit amet consectetur.
+          Subscribe to receive real-time crime alerts and safety updates in your area.
         </p>
 
         <form
@@ -27,11 +27,11 @@ export const Newsletter = () => {
           onSubmit={handleSubmit}
         >
           <Input
-            placeholder="leomirandadev@gmail.com"
-            className="bg-muted/50 dark:bg-muted/80 "
+            placeholder="Enter your email for local crime updates"
+            className="bg-muted/50 dark:bg-muted/80"
             aria-label="email"
           />
-          <Button>Subscribe</Button>
+          <Button>Get Alerts</Button>
         </form>
       </div>
 

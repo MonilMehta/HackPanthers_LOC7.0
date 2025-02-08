@@ -24,52 +24,43 @@ interface SociaNetworkslProps {
 const teamList: TeamProps[] = [
   {
     imageUrl: "https://i.pravatar.cc/150?img=35",
-    name: "Emma Smith",
-    position: "Product Manager",
+    name: "Captain Emily Stewart",
+    position: "Lead Crime Analyst",
     socialNetworks: [
       {
         name: "Linkedin",
-        url: "https://www.linkedin.com/in/leopoldo-miranda/",
+        url: "https://www.linkedin.com/",
       },
       {
         name: "Facebook",
         url: "https://www.facebook.com/",
-      },
-      {
-        name: "Instagram",
-        url: "https://www.instagram.com/",
-      },
+      }
     ],
   },
   {
     imageUrl: "https://i.pravatar.cc/150?img=60",
-    name: "John Doe",
-    position: "Tech Lead",
+    name: "Robert Chen",
+    position: "Data Science Director",
     socialNetworks: [
       {
         name: "Linkedin",
-        url: "https://www.linkedin.com/in/leopoldo-miranda/",
+        url: "https://www.linkedin.com/",
       },
       {
         name: "Facebook",
         url: "https://www.facebook.com/",
-      },
-      {
-        name: "Instagram",
-        url: "https://www.instagram.com/",
-      },
+      }
     ],
   },
   {
     imageUrl: "https://i.pravatar.cc/150?img=36",
-    name: "Ashley Ross",
-    position: "Frontend Developer",
+    name: "Sarah Martinez",
+    position: "Community Liaison",
     socialNetworks: [
       {
         name: "Linkedin",
-        url: "https://www.linkedin.com/in/leopoldo-miranda/",
+        url: "https://www.linkedin.com/",
       },
-
       {
         name: "Instagram",
         url: "https://www.instagram.com/",
@@ -78,17 +69,13 @@ const teamList: TeamProps[] = [
   },
   {
     imageUrl: "https://i.pravatar.cc/150?img=17",
-    name: "Bruce Rogers",
-    position: "Backend Developer",
+    name: "David Thompson",
+    position: "Security Specialist",
     socialNetworks: [
       {
         name: "Linkedin",
-        url: "https://www.linkedin.com/in/leopoldo-miranda/",
-      },
-      {
-        name: "Facebook",
-        url: "https://www.facebook.com/",
-      },
+        url: "https://www.linkedin.com/",
+      }
     ],
   },
 ];
