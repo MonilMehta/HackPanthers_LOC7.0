@@ -42,6 +42,8 @@ const OfficerLogin = () => {
         login(token, role);
         document.cookie = `accessToken=${token};max-age=${7 * 24 * 60 * 60};path=/`;
         document.cookie = `role=${role};max-age=${7 * 24 * 60 * 60};path=/`;
+        document.cookie = `phone=${response.data.data.user.phone_no};max-age=${7 * 24 * 60 * 60};path=/`;
+        document.cookie = `id=${response.data.data.user._id};max-age=${7 * 24 * 60 * 60};path=/`;
       } else {
         setError(response.data.message || "Login failed");
       }

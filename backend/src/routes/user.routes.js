@@ -9,7 +9,6 @@ router.route("/register").post(registerUser);
 
 router.route("/login").post(loginUser);
 
-router.route("/getUser").get(getAllUsers);
 // secured routes
 router.route("/logout").post(verifyJWT ,logoutUser)
 
@@ -20,5 +19,7 @@ router.route("/change-password").post(verifyJWT, changeCurrentPassword)
 router.route("/current-user").get(verifyJWT, getCurrentUser)
 
 router.route("/update-details").patch(verifyJWT, updateAccountDetails)
+
+router.route("/get-users").get(verifyJWT, getAllUsers);
 
 export default router
