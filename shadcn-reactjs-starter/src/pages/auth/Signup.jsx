@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Shield, UserCircle, Phone, Key, Mail, Lock, ArrowRight } from "lucide-react";
+import { Shield, UserCircle, Phone, Key, Mail, ArrowRight } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
 import axios from "axios";
@@ -134,7 +134,7 @@ const Signup = () => {
             <div className="space-y-2">
               <label className="text-sm text-slate-300">Full Name</label>
               <div className="relative">
-                <UserCircle className="absolute left-2 top-2 xl:top-3 xl:left-3 h-5 w-5 text-slate-400" />
+                <UserCircle className="absolute left-2 top-2 h-5 w-5 text-slate-400" />
                 <Input
                   type="text"
                   name="fullName"
@@ -149,7 +149,7 @@ const Signup = () => {
             <div className="space-y-2">
               <label className="text-sm text-slate-300">Mobile Number</label>
               <div className="relative">
-                <Phone className="absolute left-2 top-2 xl:top-3 xl:left-3 h-5 w-5 text-slate-400" />
+                <Phone className="absolute left-2 top-2 h-5 w-5 text-slate-400" />
                 <Input
                   type="tel"
                   name="phone"
@@ -166,7 +166,7 @@ const Signup = () => {
             <div className="space-y-2">
               <label className="text-sm text-slate-300">Email</label>
               <div className="relative">
-                <Mail className="absolute left-2 top-2 xl:top-3 xl:left-3 h-5 w-5 text-slate-400" />
+                <Mail className="absolute left-2 top-2 h-5 w-5 text-slate-400" />
                 <Input
                   type="text"
                   name="email"
@@ -182,7 +182,7 @@ const Signup = () => {
             <div className="space-y-2">
               <label className="text-sm text-slate-300">Password</label>
               <div className="relative">
-                <Lock className="absolute left-2 top-2 xl:top-3 xl:left-3 h-5 w-5 text-slate-400" />
+                <Key className="absolute left-2 top-2 h-5 w-5 text-slate-400" />
                 <Input
                   type="password"
                   name="password"

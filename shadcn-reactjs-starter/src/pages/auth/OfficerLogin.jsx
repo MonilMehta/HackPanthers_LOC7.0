@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Mail, Phone, Key, ArrowRight, Shield } from 'lucide-react';
+import { Mail, Phone, User, Key, ArrowRight, Shield } from 'lucide-react';
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
-import { loginCitizen } from '../../apis/citizen.api';
+import { loginUser } from '../../apis/user.api';
 import axios from "axios";
 
-const Login = () => {
+const OfficerLogin = () => {
   const { login } = useAuth();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -31,28 +31,22 @@ const Login = () => {
       const payload = isEmail(identifier)
         ? { email: identifier, password }
         : isPhone(identifier)
-        ? { phoneNo: identifier, password }
-        : null;
+        ? { phone_no: identifier, password }
+        : { username: identifier, password };
 
-      if (!payload) {
-        setError("Please enter a valid email or phone number");
-        setLoading(false);
-        return;
-      }
-
-      const response = await axios.post(loginCitizen, payload);
+      const response = await axios.post(loginUser, payload);
       if (response.data.success) {
         console.log(response);
         const token = response.data.data.accessToken;
-        login(token, "Citizen");
+        const role = response.data.data.user.role;
+        login(token, role);
         document.cookie = `accessToken=${token};max-age=${7 * 24 * 60 * 60};path=/`;
-        document.cookie = `role=citizen;max-age=${7 * 24 * 60 * 60};path=/`;
+        document.cookie = `role=${role};max-age=${7 * 24 * 60 * 60};path=/`;
       } else {
-        setError("Login failed");
+        setError(response.data.message || "Login failed");
       }
     } catch (err) {
       setError(err.response?.data?.message || err.response?.data?.split("Error: ")[1].split("<br>")[0] || "An error occurred. Please try again.");
-      console.log(err);
     }
     setLoading(false);
   };
@@ -70,9 +64,9 @@ const Login = () => {
             <Shield className="w-8 h-8 text-teal-400" />
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">
-            SurakshaSetu
+            SurakshaSetu - Police Login
           </h1>
-          <p className="text-slate-400 mt-2">Connecting Communities, Ensuring Safety</p>
+          <p className="text-slate-400 mt-2">Secure access for law enforcement</p>
         </motion.div>
 
         <motion.form 
@@ -83,19 +77,21 @@ const Login = () => {
           className="space-y-6 backdrop-blur-xl bg-white/5 p-8 rounded-2xl border border-white/10"
         >
           <div className="space-y-2">
-            <label className="text-sm text-slate-300">Email or Phone</label>
+            <label className="text-sm text-slate-300">Email, Phone, or Username</label>
             <div className="relative">
-              {identifier.includes('@') ? (
+              {isEmail(identifier) ? (
                 <Mail className="absolute left-2 top-2 h-5 w-5 text-slate-400" />
-              ) : (
+              ) : isPhone(identifier) ? (
                 <Phone className="absolute left-2 top-2 h-5 w-5 text-slate-400" />
+              ) : (
+                <User className="absolute left-2 top-2 h-5 w-5 text-slate-400" />
               )}
               <Input
                 type="text"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-500"
-                placeholder="Enter email or phone number"
+                placeholder="Enter email, phone number, or username"
               />
             </div>
           </div>
@@ -129,13 +125,9 @@ const Login = () => {
             </Alert>
           )}
         </motion.form>
-
-        <p className="mt-8 text-center text-sm text-slate-400">
-          Don't have an account? <a href="/signup" className="text-teal-400 hover:text-teal-300">Register here</a>
-        </p>
       </div>
     </div>
   );
 };
 
-export default Login;
+export default OfficerLogin;

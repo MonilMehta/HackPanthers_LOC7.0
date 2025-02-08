@@ -6,6 +6,7 @@ import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import Main from "./pages/main/policeman/Main";
 import ProtectedRoute from "./components/ProtectedRoute";
+import OfficerLogin from "./pages/auth/OfficerLogin";
 
 const App = () => {
   return (
@@ -15,6 +16,7 @@ const App = () => {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/officer-login" element={<OfficerLogin />} />
 
         {/* Protected routes */}
         <Route path="/report" element={<CrimeReport />} />
