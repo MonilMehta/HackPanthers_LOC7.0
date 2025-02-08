@@ -20,13 +20,9 @@ import {
   AlertTriangle,
   BadgeAlert,
   UserCircle,
-  Menu
+  Menu,
 } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const Sidebar = () => {
   const location = useLocation();
@@ -70,7 +66,7 @@ const Sidebar = () => {
     {
       title: "Emergency Alerts",
       icon: <Bell className="h-5 w-5" />,
-      path: "/main/alerts",
+      path: "/main/alert",
     },
     {
       title: "GeoLocation",
@@ -108,7 +104,7 @@ const Sidebar = () => {
       <div className="px-6 py-4">
         <h2 className="text-2xl font-bold text-primary">Police Portal</h2>
       </div>
-      
+
       <ScrollArea className="flex-1 px-4">
         <div className="space-y-2 py-4">
           {menuItems.map((item) => (
@@ -116,8 +112,8 @@ const Sidebar = () => {
               key={item.path}
               variant={isActiveRoute(item.path) ? "default" : "ghost"}
               className={`w-full justify-start gap-2 ${
-                isActiveRoute(item.path) 
-                  ? "bg-primary text-primary-foreground" 
+                isActiveRoute(item.path)
+                  ? "bg-primary text-primary-foreground"
                   : "hover:bg-primary/10"
               }`}
               asChild
@@ -141,7 +137,10 @@ const Sidebar = () => {
             <Settings className="h-5 w-5" />
             Settings
           </Button>
-          <Button variant="ghost" className="w-full justify-start gap-2 text-red-500 hover:text-red-500 hover:bg-red-50">
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2 text-red-500 hover:text-red-500 hover:bg-red-50"
+          >
             <LogOut className="h-5 w-5" />
             Logout
           </Button>
