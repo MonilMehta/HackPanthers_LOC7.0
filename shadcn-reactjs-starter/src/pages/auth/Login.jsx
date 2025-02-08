@@ -43,7 +43,10 @@ const Login = () => {
       const response = await axios.post(loginCitizen, payload);
       if (response.data.success) {
         console.log(response);
-        login(response.data.data.accessToken, "Citizen");
+        const token = response.data.data.accessToken;
+        login(token, "Citizen");
+        document.cookie = `accessToken=${token};max-age=${7 * 24 * 60 * 60};path=/`;
+        document.cookie = `role=citizen;max-age=${7 * 24 * 60 * 60};path=/`;
       } else {
         setError(err.response?.data?.message || err.response?.data?.split("Error: ")[1].split("<br>")[0] || "Login failed");
       }
