@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link } from "react-router-dom";
 
 export const Cta = () => {
   return (
@@ -29,7 +30,9 @@ export const Cta = () => {
             </CardContent>
             <CardFooter>
               <Button className="w-full" variant="default">
-                Submit Anonymous Report
+                <Link to='/report' className="w-full">
+                  Submit Anonymous Report
+                </Link>
               </Button>
             </CardFooter>
           </Card>
@@ -43,7 +46,9 @@ export const Cta = () => {
             </CardContent>
             <CardFooter>
               <Button className="w-full" variant="outline">
-                Officer Login
+                <Link to='/officer-login' className="w-full">
+                  Officer Login
+                </Link>
               </Button>
             </CardFooter>
           </Card>
