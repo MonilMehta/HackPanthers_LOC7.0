@@ -52,33 +52,34 @@ const ChatInterface = () => {
   // Fetch users from API
   const fetchData = async () => {
     try {
+      setRender(false);
       const chatsResponse = await axios.get(getChats, {
         headers: { Authorization: `Bearer ${cookies.accessToken}` },
       });
       const chatUsers = chatsResponse.data.data.map((chat) => ({
         id: chat.chatDetails.participant.userId,
-        name: chat.participantDetails.username,
-        avatar:
-          chat.participantDetails.avatar ||
-          `https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcZsL6PVn0SNiabAKz7js0QknS2ilJam19QQ&s`,
+        name: chat.participantDetails.fullname,
+        username: chat.participantDetails.username,
+        avatar: chat.participantDetails.photo || `https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcZsL6PVn0SNiabAKz7js0QknS2ilJam19QQ&s`,
         lastMessage: chat.lastMessage?.message || "No messages yet",
-        time: new Date(chat.lastMessage?.sentAt).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        time: new Date(chat.lastMessage?.sentAt).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"}),
+        station: chat.participantDetails.policeDetails.station,
+        rank: chat.participantDetails.policeDetails.rank,
         unreadCount: chat.unreadCount,
-        hasExistingChat: true,
+        email: chat.participantDetails.email,
+        phone: chat.participantDetails.phone_no,
         chatId: chat._id,
+        hasExistingChat: true,
       }));
 
       const usersResponse = await axios.get(getUsers, {
         headers: { Authorization: `Bearer ${cookies.accessToken}` },
       });
-      console.log(usersResponse);
       const allUsersList = usersResponse.data.data.map((user) => ({
         id: user._id,
-        name: user.username,
-        role: user.policeDetails.rank,
+        name: user.fullname,
+        username: user.username,
+        rank: user.policeDetails.rank,
         avatar: user.photo || `https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcZsL6PVn0SNiabAKz7js0QknS2ilJam19QQ&s`,
         lastMessage: "",
         time: "",
@@ -93,7 +94,6 @@ const ChatInterface = () => {
         (user) => !chatUserIds.has(user.id) && user.phone !== cookies.phone
       );
 
-      console.log(usersWithoutChats);
       setLoading(false);
       setFilteredUsers(
         [...chatUsers, ...usersWithoutChats].filter((user) =>
@@ -106,10 +106,6 @@ const ChatInterface = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   const sortChats = useCallback((chatsToSort) => {
     return [...chatsToSort].sort((a, b) => {
@@ -129,7 +125,6 @@ const ChatInterface = () => {
               lastMessage,
               unreadCount:
                 chatIds === currentChatId ? 0 : (chat.unreadCount || 0) + 1,
-              // unreadCount: chatIds === selectedChat?._id ? 0 : chat?.unreadCount || 0,
             };
           } else {
             return chat;
@@ -143,6 +138,7 @@ const ChatInterface = () => {
   );
 
   useEffect(() => {
+    fetchData();
     socketService.connect(cookies.accessToken);
     const socket = socketService.getSocket();
     if (socket) {
@@ -209,6 +205,7 @@ const ChatInterface = () => {
           }),
           isRead: msg.isRead,
           media: msg.media,
+          
         }))
       );
     } catch (err) {
