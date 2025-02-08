@@ -7,7 +7,7 @@ class SocketService {
 
     connect(token) {
         if (!this.socket) {
-            this.socket = io(process.env.REACT_APP_BACKEND_URL, {
+            this.socket = io(`http://localhost:8000`, {
                 auth: { token },
                 transports: ["websocket"]
             });

@@ -16,6 +16,7 @@ import Bulletin from "./pages/bulletin/Bulletin";
 import Geolocation from "./pages/geolocation/Geolocation";
 import AddPolice from "./pages/admin/AddPolice";
 import OfficerMetrics from "./pages/admin/Metrics";
+import Profile from "./pages/profile/Profile"
 
 const Dashboard = () => {
   return (
@@ -35,6 +36,7 @@ const Dashboard = () => {
             <Route path="wanted" element={< MostWanted/>} />
             <Route path="maps" element={<Geolocation />} />
             <Route path="bulletins" element={<Bulletin />} />
+            <Route path="profile" element={<Profile />} />
             {/* <Route path="analytics" element={<Analytics />} /> */}
             <Route path="add-officer" element={<AddPolice />} />
             <Route path="officer-metrics" element={<OfficerMetrics />} />
