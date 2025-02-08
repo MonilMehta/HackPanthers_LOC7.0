@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Search,
   MoreVertical,
@@ -7,27 +7,24 @@ import {
   Video,
   ChevronLeft,
   Paperclip,
-  Camera,
   Image,
   File,
   Clock,
-  Plus,
   AlertTriangle,
   Shield,
-  Car,
-  User,
-  MapPin,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useCookies } from "react-cookie";
+import { socketService } from "../../../../../services/socket";
 import { getUsers } from "../../../../../apis/user.api";
 import {
   getChats,
@@ -44,75 +41,160 @@ const ChatInterface = () => {
   const [allUsers, setAllUsers] = useState([]);
   const [usersWithChats, setUsersWithChats] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [render, setRender] = useState(false);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentChatId, setCurrentChatId] = useState(null);
   const [sending, setSending] = useState(false);
   const [markingAsRead, setMarkingAsRead] = useState(false);
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [cookies] = useCookies(["accessToken", "phone", "id"]);
+  const messagesEndRef = useRef(null);
 
   // Fetch users from API
+  const fetchData = async () => {
+    try {
+      const chatsResponse = await axios.get(getChats, {
+        headers: { Authorization: `Bearer ${cookies.accessToken}` },
+      });
+      const chatUsers = chatsResponse.data.data.map((chat) => ({
+        id: chat.chatDetails.participant.userId,
+        name: chat.participantDetails.username,
+        avatar:
+          chat.participantDetails.avatar ||
+          `https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcZsL6PVn0SNiabAKz7js0QknS2ilJam19QQ&s`,
+        lastMessage: chat.lastMessage?.message || "No messages yet",
+        time: new Date(chat.lastMessage?.sentAt).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        unreadCount: chat.unreadCount,
+        hasExistingChat: true,
+        chatId: chat._id,
+      }));
+
+      setUsersWithChats(chatUsers);
+
+      const usersResponse = await axios.get(getUsers, {
+        headers: { Authorization: `Bearer ${cookies.accessToken}` },
+      });
+      console.log(usersResponse);
+      const allUsersList = usersResponse.data.data.map((user) => ({
+        id: user._id,
+        name: user.username,
+        role: user.policeDetails.rank,
+        avatar: `https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcZsL6PVn0SNiabAKz7js0QknS2ilJam19QQ&s`,
+        lastMessage: "",
+        time: "",
+        station: user.policeDetails.station,
+        email: user.email,
+        phone: user.phone_no,
+        hasExistingChat: false,
+      }));
+
+      const chatUserIds = new Set(chatUsers.map((user) => user.id));
+      const usersWithoutChats = allUsersList.filter(
+        (user) => !chatUserIds.has(user.id) && user.phone !== cookies.phone
+      );
+
+      console.log(usersWithoutChats);
+      setAllUsers(usersWithoutChats);
+      setLoading(false);
+      setFilteredUsers(
+        [...chatUsers, ...usersWithoutChats].filter((user) =>
+          user.name.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      );
+      setRender(true);
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const chatsResponse = await axios.get(getChats, {
-          headers: { Authorization: `Bearer ${cookies.accessToken}` },
-        });
-        const chatUsers = chatsResponse.data.data.map((chat) => ({
-          id: chat.chatDetails.participant.userId,
-          name: chat.participantDetails.username,
-          avatar: chat.participantDetails.avatar || `https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcZsL6PVn0SNiabAKz7js0QknS2ilJam19QQ&s`,
-          lastMessage: chat.lastMessage?.message || "No messages yet",
-          time: new Date(chat.lastMessage?.sentAt).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          unreadCount: chat.unreadCount,
-          hasExistingChat: true,
-          chatId: chat._id,
-        }));
-
-        setUsersWithChats(chatUsers);
-
-        // Then fetch all users
-        const usersResponse = await axios.get(getUsers, {
-          headers: { Authorization: `Bearer ${cookies.accessToken}` },
-        });
-        console.log(usersResponse);
-        const allUsersList = usersResponse.data.data.map((user) => ({
-          id: user._id,
-          name: user.username,
-          role: user.policeDetails.rank,
-          avatar: `https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcZsL6PVn0SNiabAKz7js0QknS2ilJam19QQ&s`,
-          lastMessage: '',
-          time: '',
-          station: user.policeDetails.station,
-          email: user.email,
-          phone: user.phone_no,
-          hasExistingChat: false,
-        }));
-
-        // Filter out users that already have chats
-        const chatUserIds = new Set(chatUsers.map((user) => user.id));
-        const usersWithoutChats = allUsersList.filter(
-          (user) => !chatUserIds.has(user.id) && user.phone !== cookies.phone
-        );
-
-        console.log(usersWithoutChats);
-        setAllUsers(usersWithoutChats);
-        setLoading(false);
-      } catch (err) {
-        setError(err.message);
-        setLoading(false);
-      }
-    };
-
     fetchData();
   }, []);
 
-  const filteredUsers = [...usersWithChats, ...allUsers].filter((user) =>
-    user.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const sortChats = useCallback((chatsToSort) => {
+    return [...chatsToSort].sort((a, b) => {
+      const timeA = a.lastMessage?.sentAt || a.lastMessageAt || 0;
+      const timeB = b.lastMessage?.sentAt || b.lastMessageAt || 0;
+      return new Date(timeB) - new Date(timeA);
+    });
+  }, []);
+
+  const updateChatList = useCallback(
+    (chatIds, lastMessage) => {
+      setFilteredUsers((prevChats) => {
+        const updatedChats = prevChats.map((chat) => {
+          if (chat.id === chatIds) {
+            return {
+              ...chat,
+              lastMessage,
+              unreadCount:
+                chatIds === currentChatId ? 0 : (chat.unreadCount || 0) + 1,
+              // unreadCount: chatIds === selectedChat?._id ? 0 : chat?.unreadCount || 0,
+            };
+          } else {
+            return chat;
+          }
+        });
+        console.log(updatedChats);
+        return sortChats(updatedChats);
+      });
+    },
+    [currentChatId, sortChats]
   );
+
+  useEffect(() => {
+    socketService.connect(cookies.accessToken);
+    const socket = socketService.getSocket();
+    if (socket) {
+      socketService.joinRoom(cookies.id);
+      socket.on(
+        "chatUpdated",
+        ({ chatId, lastMessage, messages, unreadCount, isNewChat, chat }) => {
+          console.log(
+            "Chat update hua hai:",
+            chatId,
+            lastMessage,
+            messages,
+            unreadCount,
+            isNewChat,
+            chat
+          );
+          if (isNewChat) {
+            fetchData();
+            return;
+          }
+          updateChatList(chatId, lastMessage);
+          if (chatId === currentChatId) {
+            setMessages(messages);
+            markMessagesAsRead(chatId);
+          }
+        }
+      );
+
+      socket.on("messageRead", ({ chatId, userId }) => {
+        if (currentChatId === chatId && userId !== cookies.id) {
+          setMessages((prevMessages) =>
+            prevMessages.map((message) => ({
+              ...message,
+              isRead: true,
+            }))
+          );
+        }
+      });
+
+      return () => {
+        socket.off("chatCreated");
+        socket.off("chatUpdated");
+        socket.off("messageRead");
+        socketService.disconnect();
+      };
+    }
+  }, [cookies.id, selectedUser, currentChatId]);
 
   const fetchChatMessages = async (chatId) => {
     try {
@@ -140,6 +222,10 @@ const ChatInterface = () => {
     }
   };
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
   const handleUserSelect = async (user) => {
     setSelectedUser(user);
     setMessages([]); // Clear existing messages
@@ -147,7 +233,7 @@ const ChatInterface = () => {
     if (user.hasExistingChat) {
       setCurrentChatId(user.chatId);
       await fetchChatMessages(user.chatId);
-      
+
       // Mark messages as read if there are unread messages
       if (user.unreadCount > 0) {
         await markMessagesAsRead(user.chatId);
@@ -157,7 +243,6 @@ const ChatInterface = () => {
       setMessages([]);
     }
   };
-
 
   const handleSendMessage = async (text = message) => {
     if (!text.trim() || !selectedUser || sending) return;
@@ -171,26 +256,13 @@ const ChatInterface = () => {
         message: text,
       };
 
-      // Add optimistic message update
-      const optimisticMessage = {
-        id: Date.now(),
-        sender: "me",
-        content: text,
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        pending: true,
-      };
-
-      setMessages((prev) => [...prev, optimisticMessage]);
       setMessage(""); // Clear input immediately for better UX
 
       const response = await axios.post(sendMessage, messageData, {
         headers: { Authorization: `Bearer ${cookies.accessToken}` },
       });
 
-      // If this was a new chat, update the chatId and user status
+      console.log(response);
       if (!currentChatId && response.data.data.chatId) {
         setCurrentChatId(response.data.data.chatId);
 
@@ -200,71 +272,10 @@ const ChatInterface = () => {
           hasExistingChat: true,
           chatId: response.data.data.chatId,
         }));
-
-        // Update the users list to reflect the new chat
-        setUsersWithChats((prev) => [
-          ...prev,
-          {
-            ...selectedUser,
-            hasExistingChat: true,
-            chatId: response.data.data.chatId,
-            lastMessage: text,
-            time: new Date().toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-          },
-        ]);
-
-        // Remove the user from allUsers list since they now have a chat
-        setAllUsers((prev) =>
-          prev.filter((user) => user.id !== selectedUser.id)
-        );
       }
-
-      // Update the message list to remove the pending state
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === optimisticMessage.id
-            ? {
-                ...msg,
-                id: response.data.data._id || msg.id,
-                pending: false,
-                time: new Date(response.data.data.sentAt).toLocaleTimeString(
-                  [],
-                  {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  }
-                ),
-              }
-            : msg
-        )
-      );
-
-      // Update the users list with the latest message
-      setUsersWithChats((prev) =>
-        prev.map((user) =>
-          user.id === selectedUser.id
-            ? {
-                ...user,
-                lastMessage: text,
-                time: new Date().toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }),
-              }
-            : user
-        )
-      );
     } catch (err) {
       console.error("Error sending message:", err);
-      // Remove the optimistic message if there was an error
-      setMessages((prev) =>
-        prev.filter((msg) => msg.id !== optimisticMessage.id)
-      );
       setError("Failed to send message");
-      // Restore the message text in the input
       setMessage(text);
     } finally {
       setSending(false);
@@ -331,7 +342,7 @@ const ChatInterface = () => {
         }
       );
 
-      console.log(response)
+      console.log(response);
       // Update local state to reflect messages as read
       setUsersWithChats((prev) =>
         prev.map((user) =>
@@ -348,6 +359,35 @@ const ChatInterface = () => {
     } finally {
       setMarkingAsRead(false);
     }
+  };
+
+  const groupMessagesByDate = (messages) => {
+    const groupedMessages = {};
+    messages.forEach((message) => {
+      const messageDate = new Date(message.sentAt).toLocaleDateString();
+      if (!groupedMessages[messageDate]) {
+        groupedMessages[messageDate] = [];
+      }
+      groupedMessages[messageDate].push(message);
+    });
+    return groupedMessages;
+  };
+
+  const renderDateHeader = (date) => {
+    const today = new Date().toLocaleDateString();
+    const yesterday = new Date(Date.now() - 86400000).toLocaleDateString();
+
+    let displayDate = date;
+    if (date === today) displayDate = "Today";
+    if (date === yesterday) displayDate = "Yesterday";
+
+    return (
+      <div className="text-center my-4 text-gray-500">
+        <span className="bg-gray-200 px-3 py-1 rounded-full text-sm">
+          {displayDate}
+        </span>
+      </div>
+    );
   };
 
   const quickResponses = [
@@ -419,38 +459,47 @@ const ChatInterface = () => {
         </div>
 
         <ScrollArea className="h-[calc(100vh-10rem)]">
-          {filteredUsers.map((user) => (
-            <div key={user.id} onClick={() => handleUserSelect(user)}>
-              {user.phone != cookies.phone && (
-                <div 
-                  className={`flex items-center gap-3 p-4 hover:bg-gray-50 cursor-pointer border-b ${
-                    selectedUser?.id === user.id ? 'bg-gray-50' : ''
-                  }`}
-                >
-                  <Avatar>
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback>{user.name[0]}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start">
-                      <h3 className="font-medium truncate">
-                        {user.name}
-                        {user.hasExistingChat && user.unreadCount > 0 && (
-                          <span className="ml-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
-                            {user.unreadCount}
-                          </span>
-                        )}
-                      </h3>
-                      <span className="text-xs text-gray-500">{user.time}</span>
+          {render &&
+            filteredUsers.map((user) => (
+              <div key={user.id} onClick={() => handleUserSelect(user)}>
+                {user.phone != cookies.phone && (
+                  <div
+                    className={`flex items-center gap-3 p-4 hover:bg-gray-50 cursor-pointer border-b ${
+                      selectedUser?.id === user.id ? "bg-gray-50" : ""
+                    }`}
+                  >
+                    <Avatar>
+                      <AvatarImage src={user.avatar} alt={user.name} />
+                      <AvatarFallback>{user.name[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start">
+                        <h3 className="font-medium truncate">
+                          {user.name}
+                          {user.hasExistingChat && user.unreadCount > 0 && (
+                            <span className="ml-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                              {user.unreadCount}
+                            </span>
+                          )}
+                        </h3>
+                        <span className="text-xs text-gray-500">
+                          {user.time}
+                        </span>
+                      </div>
+                      <p
+                        className={`text-sm ${
+                          user.hasExistingChat && user.unreadCount > 0
+                            ? "font-medium text-gray-900"
+                            : "text-gray-500"
+                        } truncate`}
+                      >
+                        {user.lastMessage}
+                      </p>
                     </div>
-                    <p className={`text-sm ${user.hasExistingChat && user.unreadCount > 0 ? 'font-medium text-gray-900' : 'text-gray-500'} truncate`}>
-                      {user.lastMessage}
-                    </p>
                   </div>
-                </div>
-              )}
-            </div>
-          ))}
+                )}
+              </div>
+            ))}
         </ScrollArea>
       </div>
 
@@ -489,38 +538,61 @@ const ChatInterface = () => {
 
           <ScrollArea className="flex-1 p-4 bg-gray-50">
             <div className="space-y-4">
+            <AnimatePresence>
+            {Object.entries(groupMessagesByDate(messages)).map(
+              ([date, dayMessages]) => (
+                <motion.div
+                  key={date}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+            {renderDateHeader(date)}
               {messages.map((msg) => (
                 <div
-                  key={msg.id}
+                  key={msg.sentAt}
                   className={`flex ${
-                    msg.sender === "me" ? "justify-end" : "justify-start"
+                    msg.sender === "me" || msg.senderId == cookies.id
+                      ? "justify-end"
+                      : "justify-start"
                   }`}
                 >
                   <div
                     className={`max-w-[70%] p-3 rounded-lg ${
-                      msg.sender === "me"
+                      msg.sender === "me" || msg.senderId == cookies.id
                         ? "bg-blue-500 text-white"
                         : "bg-white"
                     }`}
                   >
-                    {msg.type === "file" ? (
+                    {msg.type === "file" || msg.isMedia ? (
                       <div className="flex items-center gap-2">
                         <File className="h-4 w-4" />
-                        <span>{msg.content}</span>
+                        <span>{msg.content || msg.message}</span>
                       </div>
                     ) : (
-                      <p>{msg.content}</p>
+                      <p>{msg.content || msg.message}</p>
                     )}
                     <span
                       className={`text-xs ${
-                        msg.sender === "me" ? "text-blue-100" : "text-gray-500"
+                        msg.sender === "me" || msg.senderId == cookies.id
+                          ? "text-blue-100"
+                          : "text-gray-500"
                       } float-right ml-2`}
                     >
-                      {msg.time}
+                      {msg.time ||
+                        new Date(msg.sentAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                     </span>
                   </div>
                 </div>
               ))}
+              <div ref={messagesEndRef} />
+                </motion.div>
+              )
+            )}
+          </AnimatePresence>
             </div>
           </ScrollArea>
 
