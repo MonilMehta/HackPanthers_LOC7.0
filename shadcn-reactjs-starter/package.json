@@ -54,6 +54,7 @@
     "tailwind-merge": "^1.14.0",
     "tailwindcss-animate": "^1.0.6",
     "tw-elements": "^1.0.0-beta2",
+    "vite-project": "file:",
     "yup": "^1.6.1"
   },
   "devDependencies": {
