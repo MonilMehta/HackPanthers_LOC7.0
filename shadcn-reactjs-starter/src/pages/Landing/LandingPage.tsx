@@ -12,12 +12,13 @@ import { Services } from "./Services";
 import { Sponsors } from "./Sponsors";
 import { Team } from "./Team";
 import { Testimonials } from "./Testimonials";
-
+import { Bulletin } from "./Bulletin";
 const LandingPage = () => {
   return (
     <div>
       <Navbar />
       <Hero />
+      <Bulletin />
       <Sponsors />
       <About />
       <HowItWorks />
