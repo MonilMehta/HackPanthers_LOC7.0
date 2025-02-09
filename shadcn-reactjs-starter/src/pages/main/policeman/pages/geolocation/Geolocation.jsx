@@ -4,53 +4,86 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Navigation2 } from 'lucide-react';
 
-const Geolocation = () => {
+const PoliceMap = () => {
   const map = useRef(null);
   const mapplsClassObject = useRef(new mappls());
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [locations, setLocations] = useState(null);
   
-  // Sample data - replace with your backend API call
-  const locations = {
-    "type": "FeatureCollection",
-    "features": [
-      {
-        "type": "Feature",
-        "properties": {
-          "type": "police_station",
-          "title": "Central Police Station",
-          "description": "Main district police headquarters",
-          "icon": "https://apis.mapmyindia.com/map_v3/1.png",
-          "icon-size": 0.75,
-          "icon-offset": [0, -10],
-          "popupHtml": "<div class='p-2'><h3 class='font-bold'>Central Police Station</h3><p>Main district police headquarters</p></div>"
-        },
-        "geometry": {
-          "type": "Point",
-          "coordinates": [28.544, 77.5454]
-        }
-      },
-      {
-        "type": "Feature",
-        "properties": {
-          "type": "case_location",
-          "title": "Case #123",
-          "description": "Reported incident location",
-          "icon": "https://apis.mapmyindia.com/map_v3/2.png",
-          "icon-size": 0.75,
-          "icon-offset": [0, -10],
-          "popupHtml": "<div class='p-2'><h3 class='font-bold'>Case #123</h3><p>Reported incident location</p></div>"
-        },
-        "geometry": {
-          "type": "Point",
-          "coordinates": [28.549511, 77.2678250]
-        }
-      }
-    ]
+  const policeStation = {
+    type: "Feature",
+    properties: {
+      type: "police_station",
+      title: "Vile Parle Police Station",
+      description: "Main police station",
+      icon: "https://apis.mapmyindia.com/map_v3/1.png",
+      "icon-size": 0.75,
+      "icon-offset": [0, -10],
+      popupHtml: `
+        <div class='p-2'>
+          <h3 class='font-bold'>Vile Parle Police Station</h3>
+          <p>Click to navigate</p>
+        </div>
+      `
+    },
+    geometry: {
+      type: "Point",
+      coordinates: [72.8327116, 19.1031659] // Longitude, Latitude
+    }
   };
 
   const openInGoogleMaps = (lat, lng) => {
     const url = `https://www.google.com/maps?q=${lat},${lng}`;
     window.open(url, '_blank');
+  };
+
+  const fetchCaseLocations = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/api/case/getCaseLocation');
+      const data = await response.json();
+      console.log('Case locations:', data);
+      
+      // Transform case data to GeoJSON format
+      const caseFeatures = data.data
+        .filter(caseData => caseData.coordinates && caseData.coordinates.lat && caseData.coordinates.lon)
+        .map(caseData => ({
+          type: "Feature",
+          properties: {
+            type: "case_location",
+            title: `Case #${caseData.caseNo}`,
+            description: `${caseData.location.street}, ${caseData.location.city}`,
+            icon: "https://apis.mapmyindia.com/map_v3/2.png",
+            "icon-size": 0.75,
+            "icon-offset": [0, -10],
+            popupHtml: `
+              <div class='p-2'>
+                <h3 class='font-bold'>Case #${caseData.caseNo}</h3>
+                <p>${caseData.location.street}, ${caseData.location.city}</p>
+                <p>Click to navigate</p>
+              </div>
+            `
+          },
+          geometry: {
+            type: "Point",
+            coordinates: [
+              parseFloat(caseData.coordinates.lon), // Longitude
+              parseFloat(caseData.coordinates.lat)  // Latitude
+            ]
+          }
+        }));
+
+      // Combine police station and case locations
+      return {
+        type: "FeatureCollection",
+        features: [policeStation, ...caseFeatures]
+      };
+    } catch (error) {
+      console.error('Error fetching case locations:', error);
+      return {
+        type: "FeatureCollection",
+        features: [policeStation]
+      };
+    }
   };
 
   useEffect(() => {
@@ -60,11 +93,11 @@ const Geolocation = () => {
         map.current.remove();
       }
 
-      // Create map instance
+      // Create map instance centered on Vile Parle Police Station
       map.current = mapplsClassObject.current.Map({
         id: "map",
         properties: {
-          center: [28.633, 77.2194],
+          center: [72.8327116, 19.1031659], // Longitude, Latitude
           zoom: 12
         }
       });
@@ -77,64 +110,29 @@ const Geolocation = () => {
   }, []);
 
   useEffect(() => {
-    if (isMapLoaded && locations) {
-      // Add GeoJSON with pre-styled markers
-      mapplsClassObject.current.addGeoJson({
-        map: map.current,
-        data: locations,
-        fitbounds: true,
-        cType: 0,
-        popupOptions: {
-          offset: { bottom: [0, -20] },
-          closeButton: true
-        },
-        click: (e) => {
-          const { coordinates } = e.geometry;
-          openInGoogleMaps(coordinates[0], coordinates[1]);
+    if (isMapLoaded) {
+      // Fetch and add locations to map
+      fetchCaseLocations().then(geoJsonData => {
+        if (geoJsonData) {
+          setLocations(geoJsonData);
+          mapplsClassObject.current.addGeoJson({
+            map: map.current,
+            data: geoJsonData,
+            fitbounds: true,
+            cType: 0,
+            popupOptions: {
+              offset: { bottom: [0, -20] },
+              closeButton: true
+            },
+            click: (e) => {
+              const { coordinates } = e.geometry;
+              openInGoogleMaps(coordinates[1], coordinates[0]); // Latitude, Longitude
+            }
+          });
         }
       });
     }
-  }, [isMapLoaded, locations]);
-
-  // Function to fetch locations from backend
-  const fetchLocations = async () => {
-    try {
-      const response = await fetch('/api/locations');
-      const data = await response.json();
-      // Transform backend data to match GeoJSON format
-      const geoJsonData = {
-        type: "FeatureCollection",
-        features: data.map(location => ({
-          type: "Feature",
-          properties: {
-            type: location.type,
-            title: location.title,
-            description: location.description,
-            icon: location.type === 'police_station' 
-              ? 'https://apis.mapmyindia.com/map_v3/1.png'
-              : 'https://apis.mapmyindia.com/map_v3/2.png',
-            'icon-size': 0.75,
-            'icon-offset': [0, -10],
-            popupHtml: `
-              <div class='p-2'>
-                <h3 class='font-bold'>${location.title}</h3>
-                <p>${location.description}</p>
-              </div>
-            `
-          },
-          geometry: {
-            type: "Point",
-            coordinates: [location.latitude, location.longitude]
-          }
-        }))
-      };
-      // Use the transformed data
-      return geoJsonData;
-    } catch (error) {
-      console.error('Error fetching locations:', error);
-      return null;
-    }
-  };
+  }, [isMapLoaded]);
 
   return (
     <Card className="w-full max-w-6xl mx-auto">
@@ -142,12 +140,12 @@ const Geolocation = () => {
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Navigation2 className="h-5 w-5" />
-            Police Locations Map
+            Police Cases Map
           </CardTitle>
           <div className="flex gap-2">
             <Badge variant="outline" className="flex items-center gap-1">
               <MapPin className="h-4 w-4" />
-              Police Stations
+              Vile Parle Police Station
             </Badge>
             <Badge variant="outline" className="flex items-center gap-1">
               <MapPin className="h-4 w-4" fill="red" />
@@ -166,4 +164,4 @@ const Geolocation = () => {
   );
 };
 
-export default Geolocation;
+export default PoliceMap;

@@ -59,6 +59,10 @@ const ReportBySchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  is_checked:{
+    type: Boolean,
+    default: false
+  }
 });
 
 export const ReportBy = mongoose.model("ReportBy", ReportBySchema);
