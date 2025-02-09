@@ -12,10 +12,22 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Image as ImageIcon, X } from "lucide-react";
+import {
+  Loader2,
+  Image as ImageIcon,
+  X,
+  Plus,
+  AlertCircle,
+  Share2,
+  InboxIcon,
+} from "lucide-react";
 import AWSHelper from "../../../../../services/aws";
 import axios from "axios";
 import { useCookies } from "react-cookie";
+import { Badge } from "@/components/ui/badge"; // Add this import
+
+// Move styles to a separate CSS file or add to your global CSS
+import "./Alert.css"; // Create this file if needed
 
 const AlertComponent = () => {
   const [alerts, setAlerts] = useState([]);
@@ -93,8 +105,8 @@ const AlertComponent = () => {
     setError(null);
 
     try {
-      let imageUrl = '';
-      if(image){
+      let imageUrl = "";
+      if (image) {
         imageUrl = await AWSHelper.upload(image, cookies.id);
       }
       //console.log(title);
@@ -162,20 +174,13 @@ const AlertComponent = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-600" />
-      </div>
-    );
-  }
-
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-8 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Alerts Management
+        {/* Header Section with Enhanced Styling */}
+        <div className="flex justify-between items-center mb-8 bg-white p-6 rounded-xl shadow-md">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+            Police Alerts Dashboard
           </h1>
           <Dialog
             open={isDialogOpen}
@@ -185,12 +190,16 @@ const AlertComponent = () => {
             }}
           >
             <DialogTrigger asChild>
-              <Button className="bg-black hover:bg-gray-800">
-                Create New Alert
+              <Button className="bg-black hover:bg-gray-800 transition-all duration-200 shadow-lg hover:shadow-xl">
+                <span className="flex items-center gap-2">
+                  <Plus className="w-5 h-5" />
+                  Create New Alert
+                </span>
               </Button>
             </DialogTrigger>
 
-            <DialogContent className="sm:max-w-md">
+            {/* Enhanced Dialog Content */}
+            <DialogContent className="sm:max-w-md bg-white border-0 shadow-2xl">
               <DialogHeader>
                 <DialogTitle>Create New Alert</DialogTitle>
               </DialogHeader>
@@ -306,46 +315,95 @@ const AlertComponent = () => {
         </div>
 
         {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertDescription>{error}</AlertDescription>
+          <Alert variant="destructive" className="mb-6 animate-slideDown">
+            <AlertDescription className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5" />
+              {error}
+            </AlertDescription>
           </Alert>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {alerts.length > 0 ? (
-            alerts.map((alert) => (
-              <Card
-                key={alert._id}
-                className="hover:shadow-lg transition-shadow duration-200"
-              >
-                <CardHeader>
-                  <CardTitle className="text-xl font-semibold">
-                    {alert.title}
-                  </CardTitle>
-                  <p className="text-sm text-gray-500">
-                    {formatDate(alert.date)}
-                  </p>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {alert.imageUrl && (
-                    <img
-                      src={alert.imageUrl}
-                      alt={alert.title}
-                      className="w-full h-48 object-cover rounded-lg"
-                    />
-                  )}
-                  <p className="text-gray-700 whitespace-pre-wrap">
-                    {alert.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))
+        {/* Enhanced Grid Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {!isLoading ? (
+            alerts.length > 0 ? (
+              alerts.map((alert) => (
+                <Card
+                  key={alert._id}
+                  className="hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 bg-white border-0"
+                >
+                  <CardHeader className="bg-gradient-to-br from-gray-50 to-white pb-4">
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-xl font-bold text-gray-900">
+                        {alert.title}
+                      </CardTitle>
+                      <span className="text-xs text-gray-500">
+                        {formatDate(alert.date)}
+                      </span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {alert.imageUrl && (
+                      <div className="relative overflow-hidden rounded-lg group">
+                        <img
+                          src={alert.imageUrl}
+                          alt={alert.title}
+                          className="w-full h-48 object-cover transform transition-transform duration-300 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300" />
+                      </div>
+                    )}
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                        {alert.description}
+                      </p>
+                    </div>
+                    <div className="flex justify-between items-center pt-2">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary">Alert</Badge>
+                        <span className="text-sm text-gray-500">
+                          #{alert._id?.slice(-4)}
+                        </span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="hover:bg-gray-100"
+                      >
+                        <Share2 className="h-4 w-4 mr-2" />
+                        Share
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <div className="col-span-full flex flex-col items-center justify-center py-16 bg-white rounded-xl shadow-md">
+                <InboxIcon className="h-16 w-16 text-gray-400 mb-4" />
+                <p className="text-gray-500 text-lg font-medium">
+                  No alerts available
+                </p>
+                <p className="text-gray-400 text-sm mt-2">
+                  Create your first alert to get started
+                </p>
+              </div>
+            )
           ) : (
-            <div className="col-span-full text-center py-8">
-              <p className="text-gray-500 text-lg">No alerts available.</p>
+            <div className="col-span-full flex justify-center py-16">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
             </div>
           )}
         </div>
+
+        {/* Loading State with Better Visual */}
+        {isLoading && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center backdrop-blur-sm">
+            <div className="bg-white p-6 rounded-lg shadow-xl flex items-center gap-4">
+              <Loader2 className="h-8 w-8 animate-spin text-black" />
+              <p className="text-lg font-medium">Loading alerts...</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
