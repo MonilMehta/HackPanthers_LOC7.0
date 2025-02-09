@@ -1,12 +1,25 @@
-import mongoose, { Schema } from "mongoose"; 
+import mongoose, { Schema } from "mongoose";
 
-const EvidenceSchema = new mongoose.Schema({
-    caseId: { type: mongoose.Schema.Types.ObjectId, ref: "Case", required: true },
-    type: { type: String, enum: ["Photo", "Video", "Document"], required: true },
+const evidenceSchema = new Schema(
+  {
+    caseId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Case",
+      required: true,
+    },
+    type: {
+      type: String,
+      enum: ["Photo", "Video", "Document"],
+      required: true,
+    },
     fileUrl: { type: String, required: true },
-    uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Officer", required: true },
-    uploadedAt: { type: String},
-  });
+    uploadedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+  },
+  { timestamps: true }
+);
 
-export const Evidence = mongoose.model("Evidence",EvidenceSchema);
-
+export const Evidence = mongoose.model("Evidence", evidenceSchema);

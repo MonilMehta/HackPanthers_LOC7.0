@@ -43,6 +43,7 @@ import wantedRouter from './routes/wanted.routes.js'
 import leaveRouter from './routes/leave.routes.js';
 import attendanceRouter from './routes/attendance.routes.js';
 import bulletinRouter from './routes/bulletin.routes.js';
+import evidenceRouter from './routes/evidence.routes.js';
 
 // declare routes
 app.use("/api/users", userRouter);
@@ -55,6 +56,7 @@ app.use("/api/wanted",wantedRouter);
 app.use("/api/leave",leaveRouter);
 app.use("/api/attendance",attendanceRouter);
 app.use("/api/bulletin", bulletinRouter);
+app.use("/api/evidence", evidenceRouter);
 
 app.use((err, _, res, next) => {
     const statusCode = err.statusCode || 500;

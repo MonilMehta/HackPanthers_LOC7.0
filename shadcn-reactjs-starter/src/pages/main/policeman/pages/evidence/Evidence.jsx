@@ -1,137 +1,157 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { 
-  FolderOpen, 
-  FileText, 
-  Image, 
-  Video, 
-  MessageSquare, 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  FolderOpen,
+  FileText,
+  Image,
+  Video,
   Search,
   ChevronRight,
   ChevronDown,
   Upload,
-  UserPlus,
-  X
-} from 'lucide-react';
+  Loader2,
+} from "lucide-react";
+import { getAllCase, getCaseEvidence, uploadEvidence } from "../../../../../apis/evidence.api";
+import axios from "axios";
+import { useCookies } from "react-cookie";
+import AWSHelper from "../../../../../services/aws";
 
 const Evidence = () => {
-  const [cases, setCases] = useState([
-    {
-      id: "case-001",
-      title: "Robbery at Central Bank",
-      status: "active",
-      dateCreated: "2024-02-08",
-      evidence: [
-        {
-          id: "ev-001",
-          type: "image",
-          title: "Security Camera Footage",
-          description: "Front entrance camera capture at 10:30 PM",
-          dateAdded: "2024-02-08",
-          url: "/evidence/001.jpg"
-        },
-        {
-          id: "ev-002",
-          type: "document",
-          title: "Witness Statement",
-          description: "Statement from security guard on duty",
-          dateAdded: "2024-02-08",
-          url: "/evidence/statement.pdf"
-        }
-      ],
-      witnesses: [
-        {
-          id: "w-001",
-          name: "John Doe",
-          statement: "I was on duty when I noticed suspicious activity...",
-          dateAdded: "2024-02-08"
-        }
-      ]
-    },
-    // ... other cases
-  ]);
-
-  const [expandedCases, setExpandedCases] = useState({});
+  const [cases, setCases] = useState([]);
+  const [expandedCaseId, setExpandedCaseId] = useState(null);
+  const [loadingStates, setLoadingStates] = useState({});
+  const [uploadingStates, setUploadingStates] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
-  const [showWitnessForm, setShowWitnessForm] = useState(null);
-  const [newWitness, setNewWitness] = useState({
-    name: "",
-    statement: ""
-  });
+  const [selectedFiles, setSelectedFiles] = useState({});
+  const [selectedTypes, setSelectedTypes] = useState({});
+  const [cookies] = useCookies(["accessToken", "id"]);
 
-  const toggleCase = (caseId) => {
-    setExpandedCases(prev => ({
-      ...prev,
-      [caseId]: !prev[caseId]
-    }));
+  useEffect(() => {
+    fetchCases();
+  }, []);
+
+  const fetchCases = async () => {
+    try {
+      const response = await axios.get(getAllCase, {
+        headers: { Authorization: `Bearer ${cookies.accessToken}` },
+      });
+      setCases(response.data.data);
+    } catch (error) {
+      console.error("Error fetching cases:", error);
+    }
+  };
+
+  const toggleCase = async (caseId) => {
+    if (expandedCaseId === caseId) {
+      setExpandedCaseId(null);
+      return;
+    }
+
+    setExpandedCaseId(caseId);
+    setLoadingStates((prev) => ({ ...prev, [caseId]: true }));
+
+    try {
+      const response = await axios.get(`${getCaseEvidence}/${caseId}`, {
+        headers: { Authorization: `Bearer ${cookies.accessToken}` },
+      });
+      console.log(response);
+
+      setCases((prevCases) =>
+        prevCases.map((c) =>
+          c._id === caseId ? { ...c, evidence: response.data.data } : c
+        )
+      );
+    } catch (error) {
+      console.error("Error fetching evidence:", error);
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, [caseId]: false }));
+    }
+  };
+
+  const handleFileSelect = (caseId, event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setSelectedFiles((prev) => ({ ...prev, [caseId]: file }));
+    }
+  };
+
+  const handleTypeSelect = (caseId, value) => {
+    setSelectedTypes((prev) => ({ ...prev, [caseId]: value }));
+  };
+
+  const handleUpload = async (caseId) => {
+    const file = selectedFiles[caseId];
+    const type = selectedTypes[caseId];
+
+    if (!file || !type) {
+      alert("Please select both a file and evidence type");
+      return;
+    }
+
+    setUploadingStates((prev) => ({ ...prev, [caseId]: true }));
+
+    try {
+      const fileUrl = await AWSHelper.upload(file, cookies.id);
+
+      // Append evidence object into the case's evidence array
+      const response = await axios.post(
+        uploadEvidence,
+        { type, fileUrl, caseId: expandedCaseId },
+        {
+          headers: { Authorization: `Bearer ${cookies.accessToken}` },
+        }
+      );
+      console.log(response);
+      // Fetch updated case evidence
+      const updatedCase = await axios.get(`${getCaseEvidence}/${caseId}`, {
+        headers: { Authorization: `Bearer ${cookies.accessToken}` },
+      });
+
+      // Update state with the new evidence
+      setCases((prevCases) =>
+        prevCases.map((c) =>
+          c._id === caseId ? { ...c, evidence: updatedCase.data.data } : c
+        )
+      );
+
+      // Reset input fields
+      setSelectedFiles((prev) => ({ ...prev, [caseId]: null }));
+      setSelectedTypes((prev) => ({ ...prev, [caseId]: null }));
+    } catch (error) {
+      console.error("Error uploading evidence:", error);
+      alert("Failed to upload evidence. Please try again.");
+    } finally {
+      setUploadingStates((prev) => ({ ...prev, [caseId]: false }));
+    }
   };
 
   const getEvidenceIcon = (type) => {
-    switch (type) {
-      case 'image':
+    switch (type?.toLowerCase()) {
+      case "photo":
         return <Image className="w-4 h-4" />;
-      case 'video':
+      case "video":
         return <Video className="w-4 h-4" />;
-      case 'document':
+      case "document":
         return <FileText className="w-4 h-4" />;
       default:
         return <FileText className="w-4 h-4" />;
     }
   };
 
-  const handleFileUpload = (caseId, event) => {
-    const files = event.target.files;
-    if (!files.length) return;
-
-    Array.from(files).forEach(file => {
-      const newEvidence = {
-        id: `ev-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        type: file.type.startsWith('image/') ? 'image' : 
-              file.type.startsWith('video/') ? 'video' : 'document',
-        title: file.name,
-        description: 'Recently uploaded evidence',
-        dateAdded: new Date().toISOString().split('T')[0],
-        url: URL.createObjectURL(file)
-      };
-
-      setCases(prevCases => 
-        prevCases.map(c => 
-          c.id === caseId 
-            ? { ...c, evidence: [...c.evidence, newEvidence] }
-            : c
-        )
-      );
-    });
-  };
-
-  const handleAddWitness = (caseId) => {
-    if (!newWitness.name || !newWitness.statement) return;
-
-    const witness = {
-      id: `w-${Date.now()}`,
-      ...newWitness,
-      dateAdded: new Date().toISOString().split('T')[0]
-    };
-
-    setCases(prevCases =>
-      prevCases.map(c =>
-        c.id === caseId
-          ? { ...c, witnesses: [...(c.witnesses || []), witness] }
-          : c
-      )
-    );
-
-    setNewWitness({ name: "", statement: "" });
-    setShowWitnessForm(null);
-  };
-
-  const filteredCases = cases.filter(case_ =>
-    case_.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    case_.id.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredCases = cases.filter(
+    (case_) =>
+      case_.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      case_._id.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -142,162 +162,121 @@ const Evidence = () => {
             <CardTitle className="text-2xl font-bold">
               Digital Evidence Management
             </CardTitle>
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
-                <Input
-                  placeholder="Search cases..."
-                  className="pl-8"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
+            <Input
+              placeholder="Search cases..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-64"
+            />
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {filteredCases.map(case_ => (
-              <div key={case_.id} className="border rounded-lg">
-                <div 
+            {filteredCases.map((case_) => (
+              <div key={case_._id} className="border rounded-lg">
+                <div
                   className="flex items-center p-4 cursor-pointer hover:bg-gray-50"
-                  onClick={() => toggleCase(case_.id)}
+                  onClick={() => toggleCase(case_._id)}
                 >
-                  {expandedCases[case_.id] ? 
-                    <ChevronDown className="w-4 h-4 mr-2" /> : 
+                  {loadingStates[case_._id] ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : expandedCaseId === case_._id ? (
+                    <ChevronDown className="w-4 h-4 mr-2" />
+                  ) : (
                     <ChevronRight className="w-4 h-4 mr-2" />
-                  }
+                  )}
                   <FolderOpen className="w-5 h-5 mr-3 text-yellow-500" />
                   <div className="flex-1">
                     <h3 className="font-semibold">{case_.title}</h3>
                     <p className="text-sm text-gray-500">
-                      Created on {case_.dateCreated}
+                      Created on {case_.createdAt.split("T")[0]}
                     </p>
                   </div>
-                  <Badge 
-                    variant={case_.status === 'active' ? 'default' : 'secondary'}
-                    className="ml-2"
-                  >
-                    {case_.status}
-                  </Badge>
+                  <Badge>{case_.status}</Badge>
                 </div>
 
-                {expandedCases[case_.id] && (
+                {expandedCaseId === case_._id && (
                   <div className="border-t p-4">
-                    {/* Evidence Section */}
-                    <div className="mb-6">
-                      <div className="flex justify-between items-center mb-4">
-                        <h4 className="font-semibold">Evidence Files</h4>
-                        <div>
-                          <input
+                    <div className="mb-6 p-4 border rounded-lg bg-gray-50">
+                      <h4 className="font-semibold mb-4">
+                        Upload New Evidence
+                      </h4>
+                      <div className="flex gap-4 items-start">
+                        <div className="flex-1">
+                          <Input
                             type="file"
-                            id={`file-${case_.id}`}
-                            className="hidden"
-                            onChange={(e) => handleFileUpload(case_.id, e)}
-                            accept="image/*,video/*,.pdf,.doc,.docx"
-                            multiple
+                            onChange={(e) => handleFileSelect(case_._id, e)}
+                            accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.mp4,.mov"
+                            className="mb-2"
                           />
-                          <Button
-                            variant="outline"
-                            onClick={() => document.getElementById(`file-${case_.id}`).click()}
+                          <Select
+                            value={selectedTypes[case_._id]}
+                            onValueChange={(value) =>
+                              handleTypeSelect(case_._id, value)
+                            }
                           >
-                            <Upload className="w-4 h-4 mr-2" />
-                            Upload Files
-                          </Button>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select evidence type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Photo">Photo</SelectItem>
+                              <SelectItem value="Video">Video</SelectItem>
+                              <SelectItem value="Document">Document</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
+                        <Button
+                          onClick={() => handleUpload(case_._id)}
+                          disabled={
+                            uploadingStates[case_._id] ||
+                            !selectedFiles[case_._id] ||
+                            !selectedTypes[case_._id]
+                          }
+                        >
+                          {uploadingStates[case_._id] ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Upload className="w-4 h-4 mr-2" />
+                          )}
+                          Upload
+                        </Button>
                       </div>
-                      
+                    </div>
+
+                    {loadingStates[case_._id] ? (
+                      <div className="flex justify-center items-center py-8">
+                        <Loader2 className="w-8 h-8 animate-spin text-gray-500" />
+                      </div>
+                    ) : (
                       <div className="space-y-2">
-                        {case_.evidence.map(evidence => (
-                          <div 
-                            key={evidence.id}
+                        {case_.evidence.map((evidence) => (
+                          <div
+                            key={evidence._id}
                             className="flex items-center p-3 rounded-lg hover:bg-gray-50 border"
                           >
                             {getEvidenceIcon(evidence.type)}
                             <div className="ml-3 flex-1">
-                              <h5 className="font-medium">{evidence.title}</h5>
+                              <h5 className="font-medium">
+                                {evidence.title || "Untitled"}
+                              </h5>
                               <p className="text-sm text-gray-500">
-                                {evidence.description}
+                                {evidence.type}
                               </p>
                             </div>
                             <Badge variant="outline" className="ml-2">
-                              {evidence.dateAdded}
+                              {new Date(
+                                evidence.createdAt
+                              ).toLocaleDateString()}
                             </Badge>
                           </div>
                         ))}
-                      </div>
-                    </div>
-
-                    {/* Witness Statements Section */}
-                    <div>
-                      <div className="flex justify-between items-center mb-4">
-                        <h4 className="font-semibold">Witness Statements</h4>
-                        <Button
-                          variant="outline"
-                          onClick={() => setShowWitnessForm(case_.id)}
-                        >
-                          <UserPlus className="w-4 h-4 mr-2" />
-                          Add Witness
-                        </Button>
-                      </div>
-
-                      {showWitnessForm === case_.id && (
-                        <div className="mb-4 p-4 border rounded-lg">
-                          <div className="flex justify-between mb-2">
-                            <h5 className="font-medium">New Witness Statement</h5>
-                            <button
-                              onClick={() => setShowWitnessForm(null)}
-                              className="text-gray-500 hover:text-gray-700"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
+                        {case_.evidence.length === 0 && (
+                          <div className="text-center py-4 text-gray-500">
+                            No evidence found for this case
                           </div>
-                          <Input
-                            placeholder="Witness Name"
-                            className="mb-2"
-                            value={newWitness.name}
-                            onChange={(e) => setNewWitness(prev => ({
-                              ...prev,
-                              name: e.target.value
-                            }))}
-                          />
-                          <Textarea
-                            placeholder="Witness Statement"
-                            className="mb-2"
-                            value={newWitness.statement}
-                            onChange={(e) => setNewWitness(prev => ({
-                              ...prev,
-                              statement: e.target.value
-                            }))}
-                          />
-                          <Button
-                            onClick={() => handleAddWitness(case_.id)}
-                            className="w-full"
-                          >
-                            Save Statement
-                          </Button>
-                        </div>
-                      )}
-
-                      <div className="space-y-2">
-                        {case_.witnesses?.map(witness => (
-                          <div 
-                            key={witness.id}
-                            className="p-3 rounded-lg border hover:bg-gray-50"
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <h5 className="font-medium">{witness.name}</h5>
-                              <Badge variant="outline">
-                                {witness.dateAdded}
-                              </Badge>
-                            </div>
-                            <p className="text-sm text-gray-600">
-                              {witness.statement}
-                            </p>
-                          </div>
-                        ))}
+                        )}
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
               </div>
