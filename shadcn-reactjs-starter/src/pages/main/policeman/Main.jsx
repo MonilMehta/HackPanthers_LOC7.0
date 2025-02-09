@@ -29,7 +29,7 @@ const Dashboard = () => {
         <div className="flex-1 p-6">
           <Routes>
             <Route path="cases/*" element={<Cases />} />
-            <Route path="/" element={<Reports />} />
+            <Route path="/" element={<Dash />} />
             <Route path="chat" element={<Chat />} />
             <Route path="dashboard" element={<Dash />} />
             <Route path="evidence" element={<Evidence />} />

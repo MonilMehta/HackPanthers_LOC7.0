@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCookies } from 'react-cookie';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -24,10 +24,11 @@ import {
   Menu,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Link as Lk } from "react-router-dom";
+
 const Sidebar = () => {
   const location = useLocation();
-  const [cookies] = useCookies(['role']);
+  const navigate = useNavigate();
+  const [cookies, setCookie, removeCookie] = useCookies(['role']);
   const role = cookies.role;
 
   const menuItems = [
@@ -46,17 +47,11 @@ const Sidebar = () => {
       icon: <FileImage className="h-5 w-5" />,
       path: "/main/evidence",
     },
-    // {
-    //   title: "Incident Reports",
-    //   icon: <FileText className="h-5 w-5" />,
-    //   path: "/main/reports",
-    // },
     {
       title: "Personnel Management",
       icon: <Users className="h-5 w-5" />,
       path: "/main/personnel",
     },
-    
     {
       title: "Communication Hub",
       icon: <MessageSquare className="h-5 w-5" />,
@@ -121,6 +116,7 @@ const Sidebar = () => {
   const isActiveRoute = (path) => {
     return location.pathname === path;
   };
+
   const handleCheckIn = async () => {
     try {
       const res = await fetch("http://localhost:8000/api/attendance/enterAttendance", {
@@ -133,6 +129,14 @@ const Sidebar = () => {
     } catch (error) {
       console.error("Error during check-in:", error);
     }
+  };
+
+  const handleLogout = () => {
+    // Clear cookies
+    removeCookie('role');
+    removeCookie('id');
+    // Redirect to login page
+    navigate('/');
   };
 
   const SidebarContent = () => (
@@ -181,6 +185,7 @@ const Sidebar = () => {
           <Button
             variant="ghost"
             className="w-full justify-start gap-2 text-red-500 hover:text-red-500 hover:bg-red-50"
+            onClick={handleLogout}
           >
             <LogOut className="h-5 w-5" />
             Logout

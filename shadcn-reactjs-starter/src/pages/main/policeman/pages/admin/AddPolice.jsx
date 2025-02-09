@@ -166,8 +166,19 @@ const AddPolice = () => {
       console.error("Registration error:", error);
       let errorMessage = "Failed to register officer.";
 
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
+      if (error.response) {
+        if (error.response.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (
+          typeof error.response.data === "string" &&
+          error.response.data.includes("Error:")
+        ) {
+          try {
+            errorMessage = error.response.data.split("Error: ")[1].split("<br>")[0];
+          } catch (e) {
+            errorMessage = error.response.data;
+          }
+        }
       }
 
       toast({
