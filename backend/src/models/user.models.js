@@ -37,7 +37,7 @@ const userSchema = new Schema(
     gender:{
       type: String,
       enum: ["Male", "Female"],
-      required: true
+      required: false
     },
     photo: {
       type: String,
@@ -78,7 +78,7 @@ const userSchema = new Schema(
     shift_type:{
       type: String,
       enum: ["Morning", "Evening", "Night"],
-      required: true
+      required: false
     },
   },
   { timestamps: true }

@@ -17,6 +17,7 @@ import Geolocation from "./pages/geolocation/Geolocation";
 import AddPolice from "./pages/admin/AddPolice";
 import OfficerMetrics from "./pages/admin/Metrics";
 import Profile from "./pages/profile/Profile";
+import AdminLeaveApplications from "./pages/roster/AdminLeaveApplications";
 
 
 
@@ -43,6 +44,7 @@ const Dashboard = () => {
             <Route path="analytics" element={<Analytics />} />
             <Route path="add-officer" element={<AddPolice />} />
             <Route path="officer-metrics" element={<OfficerMetrics />} />
+            <Route path="admin-roster" element={<AdminLeaveApplications />} />
             <Route path="*" element={<h1>Not Found</h1>} />
           </Routes>
         </div>

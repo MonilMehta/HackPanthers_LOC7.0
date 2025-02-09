@@ -23,6 +23,8 @@ const caseSchema = new Schema(
       city: { type: String, trim: true },
       state: { type: String, trim: true },
       pincode: { type: String, trim: true },
+      latitude: { type: String, trim: true }, // Added latitude field
+      longitude: { type: String, trim: true }
     },
     evidence: [{ type: mongoose.Schema.Types.ObjectId, ref: "Evidence" }],
     witnessStatements: [

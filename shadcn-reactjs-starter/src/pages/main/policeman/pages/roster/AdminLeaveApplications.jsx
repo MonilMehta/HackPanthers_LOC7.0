@@ -66,7 +66,7 @@ const AdminLeaveApplications = () => {
               <div key={leave._id} className="bg-gray-50 p-4 rounded-lg shadow hover:shadow-md transition duration-200 flex flex-col md:flex-row md:justify-between items-start gap-4">
                 <div className="space-y-1">
                   <p>
-                    <span className="font-semibold">Officer:</span> {leave.officer?.name || "N/A"}
+                    <span className="font-semibold">Officer:</span> {leave.officer?.fullname || "N/A"}
                   </p>
                   <p>
                     <span className="font-semibold">Type:</span> {leave.type}
