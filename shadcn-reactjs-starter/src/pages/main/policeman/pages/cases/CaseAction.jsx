@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from 'lucide-react';
+import { Cookies } from 'react-cookie';
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
@@ -147,6 +148,8 @@ const CaseAction = () => {
               type: 'success',
               message: 'Document processed successfully!'
             });
+            setReportedBy(Cookies.get('id'));
+            
           } else {
             setNotification({
               type: 'warning',

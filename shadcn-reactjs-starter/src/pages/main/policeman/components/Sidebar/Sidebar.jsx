@@ -56,11 +56,7 @@ const Sidebar = () => {
       icon: <Users className="h-5 w-5" />,
       path: "/main/personnel",
     },
-    {
-      title: "Duty Roster",
-      icon: <Calendar className="h-5 w-5" />,
-      path: "/main/roster",
-    },
+    
     {
       title: "Communication Hub",
       icon: <MessageSquare className="h-5 w-5" />,
@@ -107,12 +103,36 @@ const Sidebar = () => {
         title: "Officer Metrics",
         icon: <BarChart3 className="h-5 w-5" />,
         path: "/main/officer-metrics",
+      },
+      {
+        title: "Admin Roster",
+        icon: <Calendar className="h-5 w-5" />,
+        path: "/main/admin-roster",
       }
-    ] : []),
+    ] : [
+      {
+        title: "Duty Roster",
+        icon: <Calendar className="h-5 w-5" />,
+        path: "/main/roster",
+      }
+    ]),
   ];
 
   const isActiveRoute = (path) => {
     return location.pathname === path;
+  };
+  const handleCheckIn = async () => {
+    try {
+      const res = await fetch("http://localhost:8000/api/attendance/enterAttendance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ /* include any required attendance data */ })
+      });
+      if (!res.ok) throw new Error("Check-in failed");
+      fetchAttendance();
+    } catch (error) {
+      console.error("Error during check-in:", error);
+    }
   };
 
   const SidebarContent = () => (
@@ -121,6 +141,11 @@ const Sidebar = () => {
         <h2 className="text-2xl font-bold text-primary">Police Portal</h2>
       </div>
 
+      <div className="flex justify-center mb-4">
+        <Button onClick={handleCheckIn} >
+          Check In
+        </Button>
+      </div>
       <ScrollArea className="flex-1 px-4">
         <div className="space-y-2 py-4">
           {menuItems.map((item) => (
