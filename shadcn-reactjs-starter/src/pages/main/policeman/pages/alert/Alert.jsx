@@ -97,6 +97,8 @@ const AlertComponent = () => {
       if(image){
         imageUrl = await AWSHelper.upload(image, cookies.id);
       }
+      //console.log(title);
+      //console.log(description);
       console.log(imageUrl);
       const response = await axios.post(
         "http://localhost:8000/api/alert/sendAlert",
