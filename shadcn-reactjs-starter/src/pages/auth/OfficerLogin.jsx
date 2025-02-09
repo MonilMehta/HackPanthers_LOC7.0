@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -14,6 +15,7 @@ const OfficerLogin = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const isEmail = (input) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input);
   const isPhone = (input) => /^[6-9]\d{9}$/.test(input);
@@ -44,6 +46,8 @@ const OfficerLogin = () => {
         document.cookie = `role=${role};max-age=${7 * 24 * 60 * 60};path=/`;
         document.cookie = `phone=${response.data.data.user.phone_no};max-age=${7 * 24 * 60 * 60};path=/`;
         document.cookie = `id=${response.data.data.user._id};max-age=${7 * 24 * 60 * 60};path=/`;
+        document.cookie = `name=${response.data.data.user.fullname};max-age=${7 * 24 * 60 * 60};path=/`;
+        navigate("/main/dashboard");
       } else {
         setError(response.data.message || "Login failed");
       }

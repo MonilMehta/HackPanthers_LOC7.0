@@ -8,23 +8,11 @@ import { emitSocketEvents } from "../socket.js";
 
 const sendMessage = asyncHandler( async ( req, res ) => {
 
-    const { receiverId, chatId, message } = req.body;
+    const { receiverId, chatId, message, media } = req.body;
     const senderId = req.user._id;
 
-    if((!receiverId && !chatId) || (!message && !req.file)){
+    if((!receiverId && !chatId) || (!message && !media)){
         throw new ApiError(400, "Receiver ID or Chat ID and either a message or media file are required");
-    }
-
-    let media = null;
-    if(req.file?.path){
-        const mediaUploaded = await uploadOnCloudinary(req.file.path);
-        if(!mediaUploaded.url){
-            throw new ApiError(400, "Error while uploading the media file");
-        }
-        media = {
-            url: mediaUploaded.url,
-            type: mediaUploaded.resource_type,
-        };
     }
 
     let chat = null;

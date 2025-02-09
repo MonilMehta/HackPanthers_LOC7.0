@@ -4,14 +4,16 @@ import {
   MoreVertical,
   Send,
   Phone,
-  Video,
+  Video as VideoIcon,
   ChevronLeft,
   Paperclip,
   Image,
   File,
+  Video,
   Clock,
   AlertTriangle,
   Shield,
+  Film,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
@@ -33,6 +35,7 @@ import {
   markAsRead,
 } from "../../../../../apis/chat.api";
 import axios from "axios";
+import AWSHelper from "../../../../../services/aws";
 
 const ChatInterface = () => {
   const [selectedUser, setSelectedUser] = useState(null);
@@ -46,6 +49,8 @@ const ChatInterface = () => {
   const [sending, setSending] = useState(false);
   const [markingAsRead, setMarkingAsRead] = useState(false);
   const [filteredUsers, setFilteredUsers] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
   const [cookies] = useCookies(["accessToken", "phone", "id"]);
   const messagesEndRef = useRef(null);
 
@@ -56,13 +61,19 @@ const ChatInterface = () => {
       const chatsResponse = await axios.get(getChats, {
         headers: { Authorization: `Bearer ${cookies.accessToken}` },
       });
+      console.log(chatsResponse)
       const chatUsers = chatsResponse.data.data.map((chat) => ({
         id: chat.chatDetails.participant.userId,
         name: chat.participantDetails.fullname,
         username: chat.participantDetails.username,
-        avatar: chat.participantDetails.photo || `https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcZsL6PVn0SNiabAKz7js0QknS2ilJam19QQ&s`,
-        lastMessage: chat.lastMessage?.message || "No messages yet",
-        time: new Date(chat.lastMessage?.sentAt).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"}),
+        avatar:
+          chat.participantDetails.photo ||
+          `https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcZsL6PVn0SNiabAKz7js0QknS2ilJam19QQ&s`,
+        lastMessage: chat.lastMessage?.message || "sent " + chat.lastMessage?.media?.type || "No messages yet",
+        time: new Date(chat.lastMessage?.sentAt).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
         station: chat.participantDetails.policeDetails.station,
         rank: chat.participantDetails.policeDetails.rank,
         unreadCount: chat.unreadCount,
@@ -80,7 +91,9 @@ const ChatInterface = () => {
         name: user.fullname,
         username: user.username,
         rank: user.policeDetails.rank,
-        avatar: user.photo || `https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcZsL6PVn0SNiabAKz7js0QknS2ilJam19QQ&s`,
+        avatar:
+          user.photo ||
+          `https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcZsL6PVn0SNiabAKz7js0QknS2ilJam19QQ&s`,
         lastMessage: "",
         time: "",
         station: user.policeDetails.station,
@@ -203,9 +216,9 @@ const ChatInterface = () => {
             hour: "2-digit",
             minute: "2-digit",
           }),
+          sentAt: msg.sentAt,
           isRead: msg.isRead,
           media: msg.media,
-          
         }))
       );
     } catch (err) {
@@ -273,48 +286,57 @@ const ChatInterface = () => {
       setSending(false);
     }
   };
-
   const handleFileUpload = async (type) => {
     const input = document.createElement("input");
     input.type = "file";
-    input.accept = type === "image" ? "image/*" : "*/*";
+
+    // Set accept attribute based on file type
+    switch (type) {
+      case "image":
+        input.accept = "image/*";
+        break;
+      case "video":
+        input.accept = "video/*";
+        break;
+      case "document":
+        input.accept = ".pdf,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx";
+        break;
+      default:
+        input.accept = "*/*";
+    }
+
     input.onchange = async (e) => {
       const file = e.target.files[0];
       if (file) {
         try {
-          const formData = new FormData();
-          formData.append("media", file);
-          formData.append("receiverId", selectedUser.id);
-          if (currentChatId) {
-            formData.append("chatId", currentChatId);
+          // Validate file size (e.g., 100MB limit)
+          const maxSize = 100 * 1024 * 1024; // 100MB in bytes
+          if (file.size > maxSize) {
+            throw new Error("File size exceeds 100MB limit");
           }
 
-          const response = await axios.post(sendMessage, formData, {
+          // Upload to AWS and get URL
+          const fileUrl = await AWSHelper.upload(file, currentChatId);
+
+          // Send message with media
+          const response = await axios.post(sendMessage, {receiverId: selectedUser.id, chatId: currentChatId, media: {url: fileUrl, type: type}}, {
             headers: {
               Authorization: `Bearer ${cookies.accessToken}`,
-              "Content-Type": "multipart/form-data",
             },
           });
 
-          // Update UI with the new message
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: prev.length + 1,
-              sender: "me",
-              content: `📎 File attached: ${file.name}`,
-              type: "file",
-              fileName: file.name,
-              fileType: file.type,
-              time: new Date().toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              }),
-            },
-          ]);
+          // Update UI based on file type
+          const mediaPreview =
+            type === "image"
+              ? `📷 Image: ${file.name}`
+              : type === "video"
+              ? `🎥 Video: ${file.name}`
+              : type === "document"
+              ? `📄 Document: ${file.name}`
+              : `📎 File: ${file.name}`;
         } catch (err) {
-          console.error("Error uploading file:", err);
-          setError("Failed to upload file");
+          console.error("Error handling file:", err);
+          setError(err.message || "Failed to upload file");
         }
       }
     };
@@ -343,15 +365,15 @@ const ChatInterface = () => {
   };
 
   const groupMessagesByDate = (messages) => {
-    const groupedMessages = {};
+    const groups = {};
     messages.forEach((message) => {
-      const messageDate = new Date(message.sentAt).toLocaleDateString();
-      if (!groupedMessages[messageDate]) {
-        groupedMessages[messageDate] = [];
+      const date = new Date(message.sentAt).toLocaleDateString();
+      if (!groups[date]) {
+        groups[date] = [];
       }
-      groupedMessages[messageDate].push(message);
+      groups[date].push(message);
     });
-    return groupedMessages;
+    return groups;
   };
 
   const renderDateHeader = (date) => {
@@ -393,6 +415,104 @@ const ChatInterface = () => {
       ],
     },
   ];
+
+  const renderFileAttachmentOptions = () => (
+    <PopoverContent className="w-48">
+      <div className="space-y-2">
+        <Button
+          variant="ghost"
+          className="w-full justify-start"
+          onClick={() => handleFileUpload("image")}
+          disabled={isUploading}
+        >
+          <Image className="h-4 w-4 mr-2" />
+          Image
+        </Button>
+        <Button
+          variant="ghost"
+          className="w-full justify-start"
+          onClick={() => handleFileUpload("video")}
+          disabled={isUploading}
+        >
+          <Film className="h-4 w-4 mr-2" />
+          Video
+        </Button>
+        <Button
+          variant="ghost"
+          className="w-full justify-start"
+          onClick={() => handleFileUpload("document")}
+          disabled={isUploading}
+        >
+          <File className="h-4 w-4 mr-2" />
+          Document
+        </Button>
+        <Button
+          variant="ghost"
+          className="w-full justify-start"
+          onClick={() => handleFileUpload("other")}
+          disabled={isUploading}
+        >
+          <Paperclip className="h-4 w-4 mr-2" />
+          Other Files
+        </Button>
+        {isUploading && (
+          <div className="px-2 py-1">
+            <div className="text-xs text-gray-500 mb-1">
+              Uploading... {uploadProgress}%
+            </div>
+            <div className="h-1 bg-gray-200 rounded">
+              <div
+                className="h-1 bg-blue-500 rounded"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </PopoverContent>
+  );
+
+  const renderMessageContent = (msg) => {
+    if (msg.media) {
+      switch (msg.media.type) {
+        case "image":
+          return (
+            <div>
+              <img
+                src={msg.media.url}
+                alt='image'
+                className="max-w-full rounded cursor-pointer hover:opacity-90"
+                onClick={() => window.open(msg.media.url, "_blank")}
+              />
+              <div className="mt-1 text-sm">📷</div>
+            </div>
+          );
+        case "video":
+          return (
+            <div>
+              <video controls className="max-w-full rounded" src={msg.media.url}>
+                Your browser does not support the video tag.
+              </video>
+              <div className="mt-1 text-sm">🎥</div>
+            </div>
+          );
+        case "document":
+        case "other":
+          return (
+            <div
+              className="flex items-center gap-2 cursor-pointer hover:opacity-80"
+              onClick={() => window.open(msg.media.url, "_blank")}
+            >
+              <File className="h-4 w-4" />
+              <span>📎</span>
+            </div>
+          );
+        default:
+          return <p>{msg.content || msg.message}</p>;
+      }
+    }
+    return <p>{msg.content || msg.message}</p>;
+  };
 
   if (loading) {
     return (
@@ -519,61 +639,51 @@ const ChatInterface = () => {
 
           <ScrollArea className="flex-1 p-4 bg-gray-50">
             <div className="space-y-4">
-            <AnimatePresence>
-            {Object.entries(groupMessagesByDate(messages)).map(
-              ([date, dayMessages]) => (
-                <motion.div
-                  key={date}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                >
-            {renderDateHeader(date)}
-              {messages.map((msg) => (
-                <div
-                  key={msg.sentAt}
-                  className={`flex ${
-                    msg.sender === "me" || msg.senderId == cookies.id
-                      ? "justify-end"
-                      : "justify-start"
-                  }`}
-                >
-                  <div
-                    className={`max-w-[70%] p-3 rounded-lg ${
-                      msg.sender === "me" || msg.senderId == cookies.id
-                        ? "bg-blue-500 text-white"
-                        : "bg-white"
-                    }`}
-                  >
-                    {msg.type === "file" || msg.isMedia ? (
-                      <div className="flex items-center gap-2">
-                        <File className="h-4 w-4" />
-                        <span>{msg.content || msg.message}</span>
-                      </div>
-                    ) : (
-                      <p>{msg.content || msg.message}</p>
-                    )}
-                    <span
-                      className={`text-xs ${
-                        msg.sender === "me" || msg.senderId == cookies.id
-                          ? "text-blue-100"
-                          : "text-gray-500"
-                      } float-right ml-2`}
+              <AnimatePresence>
+                {Object.entries(groupMessagesByDate(messages)).map(
+                  ([date, dayMessages]) => (
+                    <motion.div
+                      key={date}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5 }}
                     >
-                      {msg.time ||
-                        new Date(msg.sentAt).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                      {renderDateHeader(date)}
+                      {dayMessages.map((msg) => (
+                        <div
+                          key={msg.id || msg.sentAt}
+                          className={`flex ${
+                            msg.sender === "me" || msg.senderId === cookies.id
+                              ? "justify-end"
+                              : "justify-start"
+                          } mb-2`}
+                        >
+                          <div
+                            className={`max-w-[70%] p-3 rounded-lg ${
+                              msg.sender === "me" || msg.senderId === cookies.id
+                                ? "bg-blue-500 text-white"
+                                : "bg-white"
+                            }`}
+                          >
+                            {renderMessageContent(msg)}
+                            <span
+                              className={`text-xs ${
+                                msg.sender === "me" ||
+                                msg.senderId === cookies.id
+                                  ? "text-blue-100"
+                                  : "text-gray-500"
+                              } float-right ml-2`}
+                            >
+                              {msg.time}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </motion.div>
+                  )
+                )}
+              </AnimatePresence>
               <div ref={messagesEndRef} />
-                </motion.div>
-              )
-            )}
-          </AnimatePresence>
             </div>
           </ScrollArea>
 
@@ -594,6 +704,14 @@ const ChatInterface = () => {
                     >
                       <Image className="h-4 w-4 mr-2" />
                       Image
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start"
+                      onClick={() => handleFileUpload("video")}
+                    >
+                      <Video className="h-4 w-4 mr-2" />
+                      Video
                     </Button>
                     <Button
                       variant="ghost"
