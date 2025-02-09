@@ -34,7 +34,7 @@ const Sidebar = () => {
     {
       title: "Dashboard",
       icon: <LayoutDashboard className="h-5 w-5" />,
-      path: "/main/dashboard",
+      path: "/main/",
     },
     {
       title: "Case Management",
