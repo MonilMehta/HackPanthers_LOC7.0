@@ -21,7 +21,7 @@ const generateAccessAndRefreshTokens = async(userId) => {
 
 const registerUser = asyncHandler( async ( req, res ) => {
 
-    const {username, email, date_of_birth,gender, phone_no, address, fullname, photo, password, role, policeDetails, avaliableLeave, usedLeave} = req.body;
+    const {username, email, date_of_birth,gender, phone_no, address, fullname, photo, password, role, policeDetails, avaliableLeave, usedLeave, shift_type} = req.body;
 
     const existingUser = await User.findOne({
         $or: [{ username }, { email }]
@@ -31,7 +31,7 @@ const registerUser = asyncHandler( async ( req, res ) => {
     }
     console.log(username);
     const user = await User.create({
-        username: username.toLowerCase(), email, date_of_birth, gender, phone_no, address, fullname, photo, password, role, policeDetails, avaliableLeave, usedLeave
+        username: username.toLowerCase(), email, date_of_birth, gender, phone_no, address, fullname, photo, password, role, policeDetails, avaliableLeave, usedLeave, shift_type
     })
 
     const createdUser = await User.findById(user._id).select(

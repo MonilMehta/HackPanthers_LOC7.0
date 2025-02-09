@@ -74,7 +74,12 @@ const userSchema = new Schema(
     usedLeave:{
       type: Number,
       default: 0
-    }
+    },
+    shift_type:{
+      type: String,
+      enum: ["Morning", "Evening", "Night"],
+      required: true
+    },
   },
   { timestamps: true }
 );
