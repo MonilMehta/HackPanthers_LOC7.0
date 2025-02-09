@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,11 @@ import {
   Upload,
   Loader2,
 } from "lucide-react";
-import { getAllCase, getCaseEvidence, uploadEvidence } from "../../../../../apis/evidence.api";
+import {
+  getAllCase,
+  getCaseEvidence,
+  uploadEvidence,
+} from "../../../../../apis/evidence.api";
 import axios from "axios";
 import { useCookies } from "react-cookie";
 import AWSHelper from "../../../../../services/aws";
@@ -64,7 +69,7 @@ const Evidence = () => {
       const response = await axios.get(`${getCaseEvidence}/${caseId}`, {
         headers: { Authorization: `Bearer ${cookies.accessToken}` },
       });
-      console.log(response);
+      console.log(response.data.data);
 
       setCases((prevCases) =>
         prevCases.map((c) =>
@@ -262,11 +267,36 @@ const Evidence = () => {
                               <p className="text-sm text-gray-500">
                                 {evidence.type}
                               </p>
+
+                              {/* Render image if the evidence type is photo/image */}
+                              {["photo", "image"].includes(
+                                evidence.type.toLowerCase()
+                              ) && (
+                                <Link to={evidence.fileUrl}>
+                                  <img
+                                    src={evidence.fileUrl}
+                                    alt="Evidence"
+                                    className="mt-2 rounded-md w-20 h-20 object-cover border cursor-pointer"
+                                  />
+                                </Link>
+                              )}
+
+                              {/* Render video if the evidence type is video */}
+                              {evidence.type.toLowerCase() === "video" && (
+                                <video
+                                  controls
+                                  className="mt-2 rounded-md w-40 h-24 border"
+                                >
+                                  <source
+                                    src={evidence.fileUrl}
+                                    type="video/mp4"
+                                  />
+                                  Your browser does not support the video tag.
+                                </video>
+                              )}
                             </div>
                             <Badge variant="outline" className="ml-2">
-                              {new Date(
-                                evidence.createdAt
-                              ).toLocaleDateString()}
+                              {evidence.uploadedBy.fullname}
                             </Badge>
                           </div>
                         ))}

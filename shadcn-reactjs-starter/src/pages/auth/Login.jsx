@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -14,6 +15,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
 
   const isEmail = (input) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input);
   const isPhone = (input) => /^[6-9]\d{9}$/.test(input);
@@ -47,6 +49,7 @@ const Login = () => {
         login(token, "Citizen");
         document.cookie = `accessToken=${token};max-age=${7 * 24 * 60 * 60};path=/`;
         document.cookie = `role=citizen;max-age=${7 * 24 * 60 * 60};path=/`;
+        navigate("/report")
       } else {
         setError("Login failed");
       }

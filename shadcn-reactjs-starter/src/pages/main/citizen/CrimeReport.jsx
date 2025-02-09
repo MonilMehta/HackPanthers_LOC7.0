@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { AlertCircle, Upload, X } from "lucide-react";
 import axios from "axios";
+import AWSHelper from "../../../services/aws"
 
 // Create axios instance
 const api = axios.create({
@@ -55,6 +56,10 @@ const CrimeReport = () => {
     setSuccess("");
 
     try {
+      let fileUrl = ''
+      if(files[0]){
+        fileUrl = await AWSHelper.upload(files[0], 'report');
+      }
       const response = await api.post("/report/registerReport", {
         title: reportData.title,
         description: reportData.description,
@@ -67,6 +72,7 @@ const CrimeReport = () => {
         type_of_crime: reportData.type_of_crime,
         date: reportData.date,
         time: reportData.time,
+        evidence_photo_url: fileUrl
       });
       console.log("Report submitted:", response.data);
 
