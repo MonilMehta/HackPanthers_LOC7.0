@@ -35,7 +35,7 @@ const Sidebar = () => {
     {
       title: "Dashboard",
       icon: <LayoutDashboard className="h-5 w-5" />,
-      path: "/main/dashboard",
+      path: "/main/",
     },
     {
       title: "Case Management",
@@ -52,6 +52,7 @@ const Sidebar = () => {
       icon: <Users className="h-5 w-5" />,
       path: "/main/personnel",
     },
+
     {
       title: "Communication Hub",
       icon: <MessageSquare className="h-5 w-5" />,
@@ -88,29 +89,31 @@ const Sidebar = () => {
       path: "/main/bulletins",
     },
     // Add admin-specific menu items
-    ...(role === 'admin' ? [
-      {
-        title: "Add Officer",
-        icon: <Users className="h-5 w-5" />,
-        path: "/main/add-officer",
-      },
-      {
-        title: "Officer Metrics",
-        icon: <BarChart3 className="h-5 w-5" />,
-        path: "/main/officer-metrics",
-      },
-      {
-        title: "Admin Roster",
-        icon: <Calendar className="h-5 w-5" />,
-        path: "/main/admin-roster",
-      }
-    ] : [
-      {
-        title: "Duty Roster",
-        icon: <Calendar className="h-5 w-5" />,
-        path: "/main/roster",
-      }
-    ]),
+    ...(role === "admin"
+      ? [
+          {
+            title: "Add Officer",
+            icon: <Users className="h-5 w-5" />,
+            path: "/main/add-officer",
+          },
+          {
+            title: "Officer Metrics",
+            icon: <BarChart3 className="h-5 w-5" />,
+            path: "/main/officer-metrics",
+          },
+          {
+            title: "Admin Roster",
+            icon: <Calendar className="h-5 w-5" />,
+            path: "/main/admin-roster",
+          },
+        ]
+      : [
+          {
+            title: "Duty Roster",
+            icon: <Calendar className="h-5 w-5" />,
+            path: "/main/roster",
+          },
+        ]),
   ];
 
   const isActiveRoute = (path) => {
@@ -119,11 +122,16 @@ const Sidebar = () => {
 
   const handleCheckIn = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/attendance/enterAttendance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ /* include any required attendance data */ })
-      });
+      const res = await fetch(
+        "http://localhost:8000/api/attendance/enterAttendance",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            /* include any required attendance data */
+          }),
+        }
+      );
       if (!res.ok) throw new Error("Check-in failed");
       fetchAttendance();
     } catch (error) {
@@ -140,17 +148,15 @@ const Sidebar = () => {
   };
 
   const SidebarContent = () => (
-    <div className="flex h-full flex-col">
+    <div className="flex flex-col h-screen">
       <div className="px-6 py-4">
         <h2 className="text-2xl font-bold text-primary">Police Portal</h2>
       </div>
 
       <div className="flex justify-center mb-4">
-        <Button onClick={handleCheckIn} >
-          Check In
-        </Button>
+        <Button onClick={handleCheckIn}>Check In</Button>
       </div>
-      <ScrollArea className="flex-1 px-4">
+      <ScrollArea className="flex-1 px-4 overflow-y-auto">
         <div className="space-y-2 py-4">
           {menuItems.map((item) => (
             <Button
@@ -198,18 +204,25 @@ const Sidebar = () => {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden border-r bg-background/80 backdrop-blur-sm lg:block lg:w-64">
+      <aside className="hidden lg:block fixed top-0 left-0 h-screen w-64 border-r bg-background/80 backdrop-blur-sm overflow-hidden">
         <SidebarContent />
       </aside>
+
+      {/* Add a spacer div to prevent content overlap */}
+      <div className="hidden lg:block w-64"></div>
 
       {/* Mobile Sidebar */}
       <Sheet>
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="lg:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden fixed top-4 left-4 z-50"
+          >
             <Menu className="h-6 w-6" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-64 p-0">
+        <SheetContent side="left" className="w-64 p-0 fixed inset-0">
           <SidebarContent />
         </SheetContent>
       </Sheet>
