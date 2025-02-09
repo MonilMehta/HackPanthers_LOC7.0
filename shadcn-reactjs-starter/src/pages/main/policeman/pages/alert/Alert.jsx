@@ -2,12 +2,20 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Image as ImageIcon, X } from "lucide-react";
+import AWSHelper from "../../../../../services/aws";
 import axios from "axios";
+import { useCookies } from "react-cookie";
 
 const AlertComponent = () => {
   const [alerts, setAlerts] = useState([]);
@@ -20,6 +28,7 @@ const AlertComponent = () => {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [cookies] = useCookies(["id"]);
 
   useEffect(() => {
     fetchAlerts();
@@ -29,10 +38,16 @@ const AlertComponent = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await axios.get("http://localhost:8000/api/alert/getAlert");
+      const response = await axios.get(
+        "http://localhost:8000/api/alert/getAlert"
+      );
       setAlerts(response?.data?.alert || []);
     } catch (error) {
-      setError(error?.response?.data?.message || error.message || "Failed to fetch alerts");
+      setError(
+        error?.response?.data?.message ||
+          error.message ||
+          "Failed to fetch alerts"
+      );
       console.error("Error fetching alerts:", error);
     } finally {
       setIsLoading(false);
@@ -42,12 +57,13 @@ const AlertComponent = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 5 * 1024 * 1024) {
+        // 5MB limit
         setError("Image size should be less than 5MB");
         return;
       }
-      
-      if (!file.type.startsWith('image/')) {
+
+      if (!file.type.startsWith("image/")) {
         setError("Please upload only image files");
         return;
       }
@@ -72,32 +88,29 @@ const AlertComponent = () => {
       setError("Please fill in all required fields");
       return;
     }
-    
+
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append('title', title.trim());
-      formData.append('description', description.trim());
-      formData.append('date', new Date(date).toISOString());
-      if (image) {
-        formData.append('image', image);
+      let imageUrl = '';
+      if(image){
+        imageUrl = await AWSHelper.upload(image, cookies.id);
       }
-
+      console.log(imageUrl);
       const response = await axios.post(
         "http://localhost:8000/api/alert/sendAlert",
-        formData,
         {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
+          title,
+          description,
+          imageUrl,
+          date,
         }
       );
 
       if (response?.data?.newAlert) {
-        setAlerts(prevAlerts => [response.data.newAlert, ...prevAlerts]);
-        
+        setAlerts((prevAlerts) => [response.data.newAlert, ...prevAlerts]);
+
         // Reset form
         setTitle("");
         setDescription("");
@@ -109,7 +122,11 @@ const AlertComponent = () => {
         throw new Error("Invalid response format");
       }
     } catch (error) {
-      setError(error?.response?.data?.message || error.message || "Failed to create alert");
+      setError(
+        error?.response?.data?.message ||
+          error.message ||
+          "Failed to create alert"
+      );
       console.error("Error posting alert:", error);
     } finally {
       setIsSubmitting(false);
@@ -129,17 +146,17 @@ const AlertComponent = () => {
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) throw new Error("Invalid date");
-      
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       });
     } catch (error) {
       console.error("Date formatting error:", error);
-      return 'Invalid Date';
+      return "Invalid Date";
     }
   };
 
@@ -155,11 +172,16 @@ const AlertComponent = () => {
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Alerts Management</h1>
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) resetForm();
-          }}>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Alerts Management
+          </h1>
+          <Dialog
+            open={isDialogOpen}
+            onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) resetForm();
+            }}
+          >
             <DialogTrigger asChild>
               <Button className="bg-black hover:bg-gray-800">
                 Create New Alert
@@ -211,8 +233,12 @@ const AlertComponent = () => {
                         <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
                           <div className="flex flex-col items-center justify-center pt-5 pb-6">
                             <ImageIcon className="w-8 h-8 mb-2 text-gray-500" />
-                            <p className="text-sm text-gray-500">Click to upload image</p>
-                            <p className="text-xs text-gray-500">PNG, JPG up to 5MB</p>
+                            <p className="text-sm text-gray-500">
+                              Click to upload image
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              PNG, JPG up to 5MB
+                            </p>
                           </div>
                           <Input
                             id="image"
@@ -268,7 +294,7 @@ const AlertComponent = () => {
                         Posting...
                       </>
                     ) : (
-                      'Post Alert'
+                      "Post Alert"
                     )}
                   </Button>
                 </div>
@@ -286,10 +312,17 @@ const AlertComponent = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {alerts.length > 0 ? (
             alerts.map((alert) => (
-              <Card key={alert._id} className="hover:shadow-lg transition-shadow duration-200">
+              <Card
+                key={alert._id}
+                className="hover:shadow-lg transition-shadow duration-200"
+              >
                 <CardHeader>
-                  <CardTitle className="text-xl font-semibold">{alert.title}</CardTitle>
-                  <p className="text-sm text-gray-500">{formatDate(alert.date)}</p>
+                  <CardTitle className="text-xl font-semibold">
+                    {alert.title}
+                  </CardTitle>
+                  <p className="text-sm text-gray-500">
+                    {formatDate(alert.date)}
+                  </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {alert.imageUrl && (
@@ -299,7 +332,9 @@ const AlertComponent = () => {
                       className="w-full h-48 object-cover rounded-lg"
                     />
                   )}
-                  <p className="text-gray-700 whitespace-pre-wrap">{alert.description}</p>
+                  <p className="text-gray-700 whitespace-pre-wrap">
+                    {alert.description}
+                  </p>
                 </CardContent>
               </Card>
             ))
