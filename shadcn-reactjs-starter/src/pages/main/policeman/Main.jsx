@@ -12,7 +12,7 @@ import Alert from "./pages/alert/Alert";
 import PublicPortal from "./pages/publicportal/PublicPortal";
 import MostWanted from "./pages/wantedlist/MostWanted";
 import Bulletin from "./pages/bulletin/Bulletin";
-// import Analytics from "./pages/analytics/Analytics";
+import Analytics from "./pages/analytics/Model";
 import Geolocation from "./pages/geolocation/Geolocation";
 import AddPolice from "./pages/admin/AddPolice";
 import OfficerMetrics from "./pages/admin/Metrics";
@@ -38,7 +38,7 @@ const Dashboard = () => {
             <Route path="maps" element={<Geolocation />} />
             <Route path="bulletins" element={<Bulletin />} />
             <Route path="profile" element={<Profile />} />
-            {/* <Route path="analytics" element={<Analytics />} /> */}
+            <Route path="analytics" element={<Analytics />} />
             <Route path="add-officer" element={<AddPolice />} />
             <Route path="officer-metrics" element={<OfficerMetrics />} />
             <Route path="*" element={<h1>Not Found</h1>} />
