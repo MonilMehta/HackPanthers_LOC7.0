@@ -1,13 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useCookies } from "react-cookie";
-import { Calendar as CalendarIcon, Clock, Users, Check, X } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Users } from "lucide-react";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -29,11 +28,14 @@ import {
 import { Input } from "@/components/ui/input";
 
 const DutyRoster = () => {
-  const [cookies] = useCookies(["role"]);
+  const [cookies] = useCookies(["role", "id"]);
   const [showLeaveForm, setShowLeaveForm] = useState(false);
   const [showShiftForm, setShowShiftForm] = useState(false);
   const [selectedShift, setSelectedShift] = useState("morning");
   const isAdmin = cookies.role === "admin";
+  const officerId = cookies.id;
+  const [attendanceHistory, setAttendanceHistory] = useState([]);
+  const [leaveHistory, setLeaveHistory] = useState([]);
 
   // Sample data for officers in different shifts
   const shiftOfficers = {
@@ -54,44 +56,66 @@ const DutyRoster = () => {
     ],
   };
 
-  const attendanceHistory = [
-    {
-      date: "2025-02-08",
-      status: "Present",
-      shift: "Morning",
-      checkIn: "05:55",
-      checkOut: "14:05",
-    },
-    {
-      date: "2025-02-07",
-      status: "Present",
-      shift: "Morning",
-      checkIn: "06:02",
-      checkOut: "14:00",
-    },
-    {
-      date: "2025-02-06",
-      status: "Late",
-      shift: "Morning",
-      checkIn: "06:15",
-      checkOut: "14:10",
-    },
-    {
-      date: "2025-02-05",
-      status: "Present",
-      shift: "Morning",
-      checkIn: "05:50",
-      checkOut: "14:00",
-    },
-  ];
+  // Fetch attendance history from API
+  const fetchAttendance = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/api/attendance/getAttendance");
+      const data = await response.json();
+      setAttendanceHistory(data.data.filter(record => record.officer && record.officer._id === officerId)); // Filter by officer ID
+    } catch (error) {
+      console.error("Error fetching attendance:", error);
+    }
+  };
+
+  // Fetch leave history from API
+  const fetchLeaveHistory = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/api/leave/getLeave");
+      const data = await response.json();
+      setLeaveHistory(data.data.filter(leave => leave.officer && leave.officer._id === officerId)); // Filter by officer ID
+    } catch (error) {
+      console.error("Error fetching leave history:", error);
+    }
+  };
+
+  // Leave submission handler for the LeaveRequestForm
+  const handleLeaveSubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const payload = {
+      officer: officerId,
+      type: formData.get("leaveType"),
+      startDate: formData.get("startDate"),
+      endDate: formData.get("endDate"),
+      reason: formData.get("reason")
+    };
+    try {
+      const res = await fetch("http://localhost:8000/api/leave/applyLeave", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error("Failed to apply for leave");
+      fetchLeaveHistory();
+      setShowLeaveForm(false);
+    } catch (error) {
+      console.error("Error applying for leave:", error);
+    }
+  };
+
+  // Fetch attendance and leave data on component mount
+  useEffect(() => {
+    fetchAttendance();
+    fetchLeaveHistory();
+  }, []);
 
   const LeaveRequestForm = () => (
-    <div className="space-y-6 p-4">
+    <form onSubmit={handleLeaveSubmit} className="space-y-6 p-4">
       <div>
         <label className="block text-sm font-semibold mb-2 text-gray-700">
           Leave Type
         </label>
-        <Select>
+        <Select name="leaveType">
           <SelectTrigger className="w-full border-2 hover:border-black-400 transition-colors">
             <SelectValue placeholder="Select leave type" />
           </SelectTrigger>
@@ -111,6 +135,7 @@ const DutyRoster = () => {
           </label>
           <Input
             type="date"
+            name="startDate"
             className="w-full border-2 hover:border-black-400 transition-colors"
           />
         </div>
@@ -120,6 +145,7 @@ const DutyRoster = () => {
           </label>
           <Input
             type="date"
+            name="endDate"
             className="w-full border-2 hover:border-black-400 transition-colors"
           />
         </div>
@@ -131,6 +157,7 @@ const DutyRoster = () => {
         </label>
         <Input
           as="textarea"
+          name="reason"
           className="w-full h-32 border-2 hover:border-black-400 transition-colors resize-none"
           placeholder="Please provide a reason for your leave request..."
         />
@@ -140,11 +167,11 @@ const DutyRoster = () => {
         <Button variant="outline" onClick={() => setShowLeaveForm(false)}>
           Cancel
         </Button>
-        <Button className="bg-black-600 hover:bg-black-700">
+        <Button type="submit">
           Submit Request
         </Button>
       </div>
-    </div>
+    </form>
   );
 
   const ShiftManagementForm = () => (
@@ -313,27 +340,17 @@ const DutyRoster = () => {
               <CardContent className="p-6">
                 <div className="space-y-4">
                   {attendanceHistory.map((record, index) => (
-                    <div
-                      key={index}
-                      className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                    >
+                    <div key={index} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                       <div className="flex justify-between items-center">
                         <span className="font-semibold text-gray-700">
-                          {record.date}
+                          {new Date(record.date).toLocaleDateString()}
                         </span>
-                        <span
-                          className={`px-4 py-1 rounded-full text-sm font-medium ${
-                            record.status === "Present"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}
-                        >
+                        <span className={`px-4 py-1 rounded-full text-sm font-medium ${record.status === "present" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
                           {record.status}
                         </span>
                       </div>
                       <div className="text-sm text-gray-600 mt-2 bg-white p-2 rounded-lg">
-                        {record.shift} | In: {record.checkIn} | Out:{" "}
-                        {record.checkOut}
+                        {record.shift} | In: {record.in_time} | Out: {record.out_time}
                       </div>
                     </div>
                   ))}
@@ -348,10 +365,10 @@ const DutyRoster = () => {
                   Leave Management
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-6">
+              <CardContent className="p-6 display-flex justify-center">
                 <Dialog open={showLeaveForm} onOpenChange={setShowLeaveForm}>
                   <DialogTrigger asChild>
-                    <Button className="w-full mb-6 bg-black-600 hover:bg-black-700">
+                    <Button >
                       Request Leave
                     </Button>
                   </DialogTrigger>
@@ -367,57 +384,25 @@ const DutyRoster = () => {
                 </Dialog>
 
                 <div className="space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-gradient-to-br from-green-100 to-green-200 p-4 rounded-lg shadow-sm">
-                      <div className="text-sm font-medium text-green-800">
-                        Available Leave
-                      </div>
-                      <div className="text-2xl font-bold text-green-900 mt-1">
-                        15 days
-                      </div>
-                    </div>
-                    <div className="bg-gradient-to-br from-black-100 to-black-200 p-4 rounded-lg shadow-sm">
-                      <div className="text-sm font-medium text-black-800">
-                        Used Leave
-                      </div>
-                      <div className="text-2xl font-bold text-black-900 mt-1">
-                        5 days
-                      </div>
-                    </div>
+                  <div className="text-sm font-semibold mb-3 text-gray-700">
+                    Recent Requests
                   </div>
-
-                  <div>
-                    <div className="text-sm font-semibold mb-3 text-gray-700">
-                      Recent Requests
-                    </div>
-                    <div className="space-y-3">
-                      <div className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div className="space-y-3">
+                    {leaveHistory.map((leave, index) => (
+                      <div key={index} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                         <div className="flex justify-between items-center">
                           <span className="font-medium text-gray-700">
-                            Sick Leave
+                            {leave.type.charAt(0).toUpperCase() + leave.type.slice(1)} Leave
                           </span>
-                          <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
-                            Pending
+                          <span className={`px-3 py-1 rounded-full text-sm ${leave.status === "approved" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
+                            {leave.status}
                           </span>
                         </div>
                         <div className="text-sm text-gray-600 mt-2">
-                          Feb 10-12, 2025
+                          {new Date(leave.startDate).toLocaleDateString()} to {new Date(leave.endDate).toLocaleDateString()}
                         </div>
                       </div>
-                      <div className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium text-gray-700">
-                            Annual Leave
-                          </span>
-                          <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                            Approved
-                          </span>
-                        </div>
-                        <div className="text-sm text-gray-600 mt-2">
-                          Feb 15-20, 2025
-                        </div>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
               </CardContent>
