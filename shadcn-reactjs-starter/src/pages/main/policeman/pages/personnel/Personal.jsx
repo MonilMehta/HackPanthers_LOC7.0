@@ -13,15 +13,29 @@ import {
   UserCheck,
   Clock,
   FileText,
+  Filter,
 } from "lucide-react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useCookies } from "react-cookie";
 import { getUsers } from "../../../../../apis/user.api";
 import axios from "axios";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Personal = () => {
   const [officers, setOfficers] = useState([]);
@@ -43,8 +57,8 @@ const Personal = () => {
       const response = await axios.get(getUsers, {
         headers: { Authorization: `Bearer ${cookies.accessToken}` },
       });
-      console.log(response?.data?.data)
-      setOfficers(response?.data?.data)
+      console.log(response?.data?.data);
+      setOfficers(response?.data?.data);
       if (!response) throw new Error("Failed to fetch officer data");
     } catch (error) {
       console.error("Failed to fetch officers:", error);
@@ -66,18 +80,34 @@ const Personal = () => {
     }
   };
 
+  const handleFilterChange = (type, value) => {
+    if (type === "rank") {
+      setFilterRank(value);
+    } else if (type === "station") {
+      setFilterStation(value);
+    }
+  };
+
   const filteredOfficers = officers.filter((officer) => {
+    const searchFields = [
+      officer.fullname,
+      officer.username,
+      officer.policeDetails?.badgeNumber,
+    ]
+      .filter(Boolean)
+      .map((field) => field.toLowerCase());
+
     const matchesSearch =
-      officer.fullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      officer.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      officer.policeDetails.badgeNumber
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
+      searchTerm === "" ||
+      searchFields.some((field) => field.includes(searchTerm.toLowerCase()));
+
     const matchesRank =
-      filterRank === "all" || officer.policeDetails.rank === filterRank;
+      filterRank === "all" || officer.policeDetails?.rank === filterRank;
+
     const matchesStation =
       filterStation === "all" ||
-      officer.policeDetails.station === filterStation;
+      officer.policeDetails?.station === filterStation;
+
     return matchesSearch && matchesRank && matchesStation;
   });
 
@@ -105,7 +135,7 @@ const Personal = () => {
   }
 
   const renderStats = () => (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
       {[
         { icon: UserCheck, label: "Total Officers", value: officers.length },
         {
@@ -135,12 +165,14 @@ const Personal = () => {
         },
       ].map((stat, index) => (
         <Card key={index} className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">{stat.label}</p>
+          <div className="flex items-center justify-between space-x-4">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-500">{stat.label}</p>
               <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
             </div>
-            <stat.icon className="h-8 w-8 text-black-600" />
+            <div className="flex-shrink-0">
+              <stat.icon className="h-8 w-8 text-black-600" />
+            </div>
           </div>
         </Card>
       ))}
@@ -149,47 +181,87 @@ const Personal = () => {
 
   const renderFilters = () => (
     <div className="flex flex-col md:flex-row gap-4 mb-8">
-      <div className="flex-1">
+      <div className="flex-1 min-w-0 md:w-2/3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
             type="text"
             placeholder="Search by name, username, or badge number..."
-            className="pl-10"
+            className="pl-10 w-full"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
-      <div className="flex gap-4">
-        <Select
-          value={filterRank}
-          onValueChange={setFilterRank}
-          className="w-40"
-        >
-          <option value="all">All Ranks</option>
-          {Array.from(new Set(officers.map((o) => o.policeDetails.rank))).map(
-            (rank) => (
-              <option key={rank} value={rank}>
-                {rank}
-              </option>
-            )
-          )}
-        </Select>
-        <Select
-          value={filterStation}
-          onValueChange={setFilterStation}
-          className="w-48"
-        >
-          <option value="all">All Stations</option>
-          {Array.from(
-            new Set(officers.map((o) => o.policeDetails.station))
-          ).map((station) => (
-            <option key={station} value={station}>
-              {station}
-            </option>
-          ))}
-        </Select>
+
+      <div className="flex gap-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              <Filter className="h-4 w-4" />
+              Filters{" "}
+              {filterRank !== "all" || filterStation !== "all"
+                ? "(Active)"
+                : ""}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 p-4">
+            <DropdownMenuLabel>Filter Options</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Rank</label>
+                <Select
+                  value={filterRank}
+                  onValueChange={(value) => handleFilterChange("rank", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select rank" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Ranks</SelectItem>
+                    {Array.from(
+                      new Set(officers.map((o) => o.policeDetails.rank))
+                    )
+                      .filter(Boolean)
+                      .map((rank) => (
+                        <SelectItem key={rank} value={rank}>
+                          {rank}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Station</label>
+                <Select
+                  value={filterStation}
+                  onValueChange={(value) =>
+                    handleFilterChange("station", value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select station" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Stations</SelectItem>
+                    {Array.from(
+                      new Set(officers.map((o) => o.policeDetails.station))
+                    )
+                      .filter(Boolean)
+                      .map((station) => (
+                        <SelectItem key={station} value={station}>
+                          {station}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         <Button
           variant="outline"
           onClick={() => {
@@ -198,6 +270,9 @@ const Personal = () => {
             setFilterStation("all");
           }}
           className="gap-2"
+          disabled={
+            searchTerm === "" && filterRank === "all" && filterStation === "all"
+          }
         >
           <RefreshCw className="h-4 w-4" />
           Reset
@@ -207,64 +282,74 @@ const Personal = () => {
   );
 
   return (
-    <div className="p-6 bg-gradient-to-br from-black-50 to-gray-50 min-h-screen">
-      <div className="max-w-7xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+    <div className="p-4 md:p-6 max-w-full overflow-x-hidden">
+      <div className="max-w-[1200px] mx-auto">
+        <header className="mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2">
             Police Officer Profiles
           </h1>
           <p className="text-gray-600">
             Managing {officers.length} Active Officers
           </p>
         </header>
-
-        {renderStats()}
-        {renderFilters()}
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {renderStats()} {/* Just call renderStats directly */}
+        <div className="my-8">
+          {" "}
+          {/* Add margin to separate stats from filters */}
+          {renderFilters()}
+        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
           {filteredOfficers.map((officer) => (
             <Card
               key={officer._id}
               className="overflow-hidden hover:shadow-lg transition-all duration-300 border-gray-200"
             >
-              <CardHeader className="bg-black-600 text-black p-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="text-2xl font-bold">{officer.fullname}</h2>
-                    <p className="text-black-100 mt-1">{officer.username}</p>
+              <CardHeader className="bg-black-600 text-black p-4 md:p-6">
+                <div className="flex flex-wrap justify-between items-start gap-2">
+                  <div className="min-w-0">
+                    <h2 className="text-xl md:text-2xl font-bold truncate">
+                      {officer.fullname}
+                    </h2>
+                    <p className="text-black-100 mt-1 truncate">
+                      {officer.username}
+                    </p>
                   </div>
-                  <span className="px-4 py-1 bg-black-700 rounded-full text-sm font-medium shadow-sm">
+                  <span className="px-3 py-1 bg-black-700 rounded-full text-sm font-medium shadow-sm whitespace-nowrap">
                     {officer.policeDetails.rank}
                   </span>
                 </div>
               </CardHeader>
 
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 group hover:bg-gray-50 p-2 rounded-lg transition-colors">
-                      <Badge className="w-5 h-5 text-black-600" />
-                      <span className="text-gray-700">
+              <CardContent className="p-4 md:p-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 group hover:bg-gray-50 p-2 rounded-lg transition-colors overflow-hidden">
+                      <Badge className="flex-shrink-0 w-5 h-5 text-black-600" />
+                      <span className="text-gray-700 truncate">
                         Badge: {officer.policeDetails.badgeNumber}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 group hover:bg-gray-50 p-2 rounded-lg transition-colors">
-                      <MapPin className="w-5 h-5 text-black-600" />
-                      <span className="text-gray-700">
+                    <div className="flex items-center gap-2 group hover:bg-gray-50 p-2 rounded-lg transition-colors overflow-hidden">
+                      <MapPin className="flex-shrink-0 w-5 h-5 text-black-600" />
+                      <span className="text-gray-700 truncate">
                         {officer.policeDetails.station}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 group hover:bg-gray-50 p-2 rounded-lg transition-colors">
-                      <Phone className="w-5 h-5 text-black-600" />
-                      <span className="text-gray-700">{officer.phone_no}</span>
+                    <div className="flex items-center gap-2 group hover:bg-gray-50 p-2 rounded-lg transition-colors overflow-hidden">
+                      <Phone className="flex-shrink-0 w-5 h-5 text-black-600" />
+                      <span className="text-gray-700 truncate">
+                        {officer.phone_no}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-2 group hover:bg-gray-50 p-2 rounded-lg transition-colors">
-                      <Mail className="w-5 h-5 text-black-600" />
-                      <span className="text-gray-700">{officer.email}</span>
+                    <div className="flex items-center gap-2 group hover:bg-gray-50 p-2 rounded-lg transition-colors overflow-hidden">
+                      <Mail className="flex-shrink-0 w-5 h-5 text-black-600" />
+                      <span className="text-gray-700 truncate">
+                        {officer.email}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-2 group hover:bg-gray-50 p-2 rounded-lg transition-colors">
-                      <Calendar className="w-5 h-5 text-black-600" />
-                      <span className="text-gray-700">
+                    <div className="flex items-center gap-2 group hover:bg-gray-50 p-2 rounded-lg transition-colors overflow-hidden">
+                      <Calendar className="flex-shrink-0 w-5 h-5 text-black-600" />
+                      <span className="text-gray-700 truncate">
                         DOB: {formatDate(officer.date_of_birth)}
                       </span>
                     </div>
