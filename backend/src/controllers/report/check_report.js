@@ -1,12 +1,8 @@
-
 import { ReportBy } from "../../models/report.models.js";
-
 
 const check_report =  async (req, res) => {
   try {
     const { id } = req.body;
-
-    
     // Find the report by ID and update is_checked to true
     const report = await ReportBy.findByIdAndUpdate(
       id,
